@@ -1,0 +1,47 @@
+{
+  "name": "best-random",
+  "version": "1.0.0",
+  "description": "Seedable random number generator that is tiny, fast, and has good statistical properties.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "scripts": {
+    "bench": "gulp && ts-node bench/index.ts",
+    "build": "gulp",
+    "clean": "rimraf ./dist *.build.log",
+    "test": "cd test && jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DLehenbauer/best-random.git"
+  },
+  "keywords": [
+    "random",
+    "prng",
+    "rng",
+    "seedable",
+    "seed"
+  ],
+  "author": "Daniel Lehenbauer",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DLehenbauer/best-random/issues"
+  },
+  "homepage": "https://github.com/DLehenbauer/best-random#readme",
+  "devDependencies": {
+    "@types/benchmark": "^1.0.31",
+    "@types/jest": "^25.1.3",
+    "@types/node": "^13.7.4",
+    "benchmark": "^2.1.4",
+    "gulp": "^4.0.2",
+    "gulp-sourcemaps": "^2.6.5",
+    "gulp-terser": "^1.2.0",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "jest": "^25.1.0",
+    "merge2": "^1.3.0",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^25.2.1",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.8.2"
+  }
+}

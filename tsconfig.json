@@ -1,0 +1,24 @@
+{
+    "include": ["src/**/*.ts"],
+    "compilerOptions": {
+        "target": "es2018",
+        "lib": ["ES2018"],
+        "types": ["node", "jest"],
+        "module": "commonjs",
+        "moduleResolution": "node",
+
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "declaration": true,
+        "declarationMap": true,
+        "inlineSourceMap": true,
+
+        "esModuleInterop": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+    }
+}

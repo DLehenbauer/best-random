@@ -1,0 +1,11 @@
+# NPM always includes package.json, README*, changelog, and LICENSE*
+# Exclude everything else by default
+/*
+
+# Include *.js files under /dist/
+!/dist
+/dist/*
+!/dist/*.js
+
+# Include *.d.ts files under /dist/
+!/dist/*.d.ts

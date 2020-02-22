@@ -1,0 +1,47 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Gulp",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/node_modules/gulp/bin/gulp.js",
+            "args": [],
+            "skipFiles": [ "<node_internals>/**" ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Test",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/node_modules/jest/bin/jest",
+            "args": ["--runInBand"],
+            "disableOptimisticBPs": true,
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Bench",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
+            "args": [ "bench/index.ts" ],
+            "env": { "TS_NODE_PROJECT": "${workspaceFolder}/tsconfig.json" },
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "BinOut",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/tools/binout.js",
+            "args": [ "uint53", "0" ],
+            "console": "integratedTerminal"
+        }
+    ]
+}
