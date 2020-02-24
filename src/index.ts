@@ -43,12 +43,13 @@ export interface RandomCtor {
 }
 
 export const Random: RandomCtor =
-    function(seed0?: number, seed1?: number, seed2?: number, seed3?: number): Random {
-        const seed = new Uint32Array(
-            arguments.length === 0
-                ? [...new Array(4)].map(() => Math.random() * 0x100000000)
-                : [seed0, seed1, seed2, seed3].map((s) => s == null ? 0 : +s)
-        );
+    function(...seed: number[]): Random {
+        seed = seed.length
+            ? seed
+            : [...new Array(4)].map(() => Math.random() * 0x100000000)
+        seed.length = 4;
+
+        seed = new Uint32Array(seed) as any;
 
         do {
             // Scramble the initial seeds using a LCG w/Borosh-Niederreiter multiplier.  This serves to both
@@ -66,7 +67,7 @@ export const Random: RandomCtor =
         } while ((x | y | z | w) === 0);
 
         const uint32 = () => {
-            function rotl(v: number, k: number) {
+            const rotl = (v: number, k: number) => {
                 return (v << k) | (v >>> (32 - k));
             }
 
