@@ -15,13 +15,31 @@ export interface Random {
     float64(): number;
 }
 
-/**
-* Construct a new instance of the random number generator, initializing it with the given seed (if any).
-* 
-* If no seed is provided, `Math.random()` is used to create the initial state.
-*/
 export interface RandomCtor {
-    new(seed0?: number, seed1?: number, seed2?: number, seed3?: number): Random;
+    /**
+     * Construct a new instance of the random number generator, seeding it using Math.random().
+     */
+    new(): Random;
+
+    /**
+     * Construct a new instance of the random number generator, seeding it with a 32b integer.
+     */
+    new(seed: number): Random;
+
+    /**
+     * Construct a new instance of the random number generator, seeding it with two 32b integers.
+     */
+    new(seed0: number, seed1: number): Random;
+
+    /**
+     * Construct a new instance of the random number generator, seeding it with three 32b integers.
+     */
+    new(seed0: number, seed1: number, seed2: number): Random;
+
+    /**
+     * Construct a new instance of the random number generator, seeding it with four 32b integers.
+     */
+    new(seed0: number, seed1: number, seed2: number, seed3: number): Random;
 }
 
 export const Random: RandomCtor =
