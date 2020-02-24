@@ -54,8 +54,8 @@ export const Random: RandomCtor =
 
             let s0 = x, s1 = y, s2 = z, s3 = w;
 
-            // Adapted from the code included on Sebastian Vigna's website
-            // (see http://prng.di.unimi.it/xoroshiro128starstar.c)
+            // Adapted from the code included on Sebastian Vigna's website.
+            // (see http://prng.di.unimi.it/xoshiro128starstar.c)
 
             const result = (rotl(s1 * 5, 7) * 9) >>> 0;
             const t = s1 << 9;
