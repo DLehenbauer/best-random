@@ -1,18 +1,18 @@
 export interface Random {
-  /**
-   * Returns a pseudorandomly chosen value from the uniform distribution [0, 0xffffffff] (inclusive)
-   */
-  uint32(): number;
+    /**
+     * Returns a pseudorandomly chosen value from the uniform distribution [0, 0xffffffff] (inclusive)
+     */
+    uint32(): number;
 
-  /**
-   * Returns a pseudorandomly chosen value from the uniform distribution [0, 0x1fffffffffffff] (inclusive)
-   */
-  uint53(): number;
+    /**
+     * Returns a pseudorandomly chosen value from the uniform distribution [0, 0x1fffffffffffff] (inclusive)
+     */
+    uint53(): number;
 
-  /**
-   * Returns a pseudorandomly chosen value from the uniform distribution [0, 1) (max ~0.9999999999999999)
-   */
-  float64(): number;
+    /**
+     * Returns a pseudorandomly chosen value from the uniform distribution [0, 1) (max ~0.9999999999999999)
+     */
+    float64(): number;
 }
 
 /**
