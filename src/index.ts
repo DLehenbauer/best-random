@@ -92,9 +92,11 @@ export const Random: RandomCtor =
             return result;
         }
 
-        // Note: Rather than produce a second `uint32()`, we recombine the current state of the
-        //       generator to produce the lower 21 bits per the Xoshiro128p algorithm.  It's a
-        //       compromise that seems to work well for producing very fast 53b integer.
+        // To produce the lower 21 bits, we take advantage of the fact that the Xoshiro128** and
+        // Xoshiro128+ generators are identical, save for their output transforms.
+        // (see http://prng.di.unimi.it/xoshiro128plus.c)
+        //
+        // Note that this construction discards the weak low bit of Xoshiro128+.
         const uint53 = () => uint32() * 0x200000 + ((x + w) >>> 11);
 
         return {
