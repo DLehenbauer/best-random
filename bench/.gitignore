@@ -1,0 +1,5 @@
+# Exclude installed NPM packages
+/node_modules/
+
+# Exclude build output
+/dist/
