@@ -96,7 +96,9 @@ export const Random: RandomCtor =
         // Xoshiro128+ generators are identical, save for their output transforms.
         // (see http://prng.di.unimi.it/xoshiro128plus.c)
         //
-        // Note that this construction discards the weak low bit of Xoshiro128+.
+        // Note that this construction discards the weak low bit of Xoshiro128+.  The resulting
+        // bitstream passes the PractRand suite.  (Bitstream verified up to 256 gigabytes)
+        // (see http://pracrand.sourceforge.net/)
         const uint53 = () => uint32() * 0x200000 + ((x + w) >>> 11);
 
         return {

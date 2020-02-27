@@ -39,8 +39,8 @@
             "request": "launch",
             "name": "BinOut",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/tools/binout.js",
-            "args": [ "uint53", "0" ],
+            "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
+            "args": [ "${workspaceFolder}/tools/binout.js", "uint53", "0" ],
             "console": "integratedTerminal"
         }
     ]

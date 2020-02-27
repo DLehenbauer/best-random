@@ -39,7 +39,7 @@ describe(RNG.constructor.name, () => {
         }
     });
 
-    it("If no seeds specified, RNG is randomly seeded.", () => {
+    it("If no unspecified, seed values are randomly chosen", () => {
         assert.notEqual(new Random().uint53(), new Random().uint53());
     });
 
