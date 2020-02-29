@@ -71,7 +71,7 @@ export const Random: RandomCtor =
                 return (v << k) | (v >>> (32 - k));
             }
 
-            let s0 = x, s1 = y, s2 = z, s3 = w;
+            let s0 = x | 0, s1 = y | 0, s2 = z | 0, s3 = w | 0;
 
             // Adapted from the code included on Sebastian Vigna's website.
             // (see http://prng.di.unimi.it/xoshiro128starstar.c)
@@ -83,10 +83,7 @@ export const Random: RandomCtor =
             s3 ^= s1;
             y = s1 ^ s2;
             x = s0 ^ s3;
-        
-            s2 ^= t;
-        
-            z = s2;
+            z = s2 ^= t;
             w = rotl(s3, 11);
         
             return result;
