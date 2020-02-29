@@ -43,13 +43,16 @@ export interface RandomCtor {
 }
 
 export const Random: RandomCtor =
-    function(...seed: number[]): Random {
+    function(this: { x: number, y: number, z: number, w: number }, ...seed: number[]): Random {
+        var s = this;
+
         seed = seed.length
             ? seed
             : [...new Array(4)].map(() => Math.random() * 0x100000000)
         seed.length = 4;
 
-        seed = new Uint32Array(seed) as any;
+        // Perf: ~38% speed increase when x/y/z/w are initialized as Int32 vs. Uint32.
+        seed = new Int32Array(seed) as any;
 
         do {
             // Scramble the initial seeds using a LCG w/Borosh-Niederreiter multiplier.  This serves to both
@@ -59,32 +62,33 @@ export const Random: RandomCtor =
                 seed[i & 3] ^= i + Math.imul(0x6C078965, (s ^ (s >>> 30)) >>> 0) >>> 0;
             }
 
-            // Perf: Using `var` instead of `let` yields a ~45% speed increase (node v12 x64).
-            var [x, y, z, w] = seed;
+            // Perf: Avoid destructuring in order for v8 to recognize x/y/z/w as Int32 value (node v12 x64).
+            s.x = seed[0];
+            s.y = seed[1];
+            s.z = seed[2];
+            s.w = seed[3];
 
             // The XorShift family of algorithms have a fixed-point at 0.  Avoid all-zeros by repeating the
             // initial scrambling.
-        } while ((x | y | z | w) === 0);
+        } while ((s.x | s.y | s.z | s.w) === 0);
 
         const uint32 = () => {
             const rotl = (v: number, k: number) => {
                 return (v << k) | (v >>> (32 - k));
             }
 
-            let s0 = x | 0, s1 = y | 0, s2 = z | 0, s3 = w | 0;
-
             // Adapted from the code included on Sebastian Vigna's website.
             // (see http://prng.di.unimi.it/xoshiro128starstar.c)
 
-            const result = (rotl(s1 * 5, 7) * 9) >>> 0;
-            const t = s1 << 9;
+            const result = (rotl(s.y * 5, 7) * 9) >>> 0;
+            const t = s.y << 9;
         
-            s2 ^= s0;
-            s3 ^= s1;
-            y = s1 ^ s2;
-            x = s0 ^ s3;
-            z = s2 ^= t;
-            w = rotl(s3, 11);
+            s.z ^= s.x;
+            s.w ^= s.y;
+            s.y ^= s.z;
+            s.x ^= s.w;
+            s.z ^= t;
+            s.w = rotl(s.w, 11);
         
             return result;
         }
@@ -96,7 +100,7 @@ export const Random: RandomCtor =
         // Note that this construction discards the weak low bit of Xoshiro128+.  The resulting
         // bitstream passes the PractRand suite.  (Bitstream verified up to 256 gigabytes)
         // (see http://pracrand.sourceforge.net/)
-        const uint53 = () => uint32() * 0x200000 + ((x + w) >>> 11);
+        const uint53 = () => uint32() * 0x200000 + ((s.x + s.w) >>> 11);
 
         return {
             uint32,
