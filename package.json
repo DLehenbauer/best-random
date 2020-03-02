@@ -9,7 +9,10 @@
     "bench": "gulp && ts-node bench/index.ts",
     "build": "gulp",
     "clean": "rimraf ./dist",
-    "test": "cd test && jest"
+    "test": "cd test && jest",
+    "test:u32": "npm run build && cd tools && ts-node binout.ts best-random uint32 0 | RNG_Test stdin -seed 0 -tf 2 -te 1 -multithreaded",
+    "test:u53": "npm run build && cd tools && ts-node binout.ts best-random uint53 0 | RNG_Test stdin -seed 0 -tf 2 -te 1 -multithreaded",
+    "test:u53l": "npm run build && cd tools && ts-node binout.ts best-random uint53lo 0 | RNG_Test stdin -seed 0 -tf 2 -te 1 -multithreaded"
   },
   "repository": {
     "type": "git",
