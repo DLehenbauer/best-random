@@ -2,7 +2,8 @@ import { Suite } from "benchmark";
 import { generators } from "./generators";
 import { Random } from "../dist";
 
-const rngs = generators; //.filter(([name, _]) => name.startsWith("Xo"));
+const rngs = generators.filter(([name]) => name.match("best") || name.match("x"));
+
 
 function bench<K extends keyof Random>(g: K) {
     const suite = new Suite(`${g}`);

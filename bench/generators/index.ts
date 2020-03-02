@@ -1,12 +1,21 @@
 import { Random } from "../../dist";
 import { PCG32 } from "./pcg32";
+import { XSadd } from "./xsadd";
+import { Jsf32 } from "./jsf32";
+import { Xoshiro128ss } from "./xoshiro128ss";
 import seedrandom = require("seedrandom");
 
-const xoshiro128ss = new Random(0);
+const best = new Random(0);
+const xsadd = new XSadd(0);
+const jsf32 = new Jsf32(0);
+const xoshiro128ss = new Xoshiro128ss(0);
 const pcg32 = new PCG32(0, 0);
 
 const r1: [string, Partial<Random>][] = [
-    [ "Xoshiro128ss (best-random)", {...xoshiro128ss} ],
+    [ "best-random", best ],
+    [ "xsadd", xsadd ],
+    [ "jsf32", jsf32 ],
+    [ "xoshiro128ss", xoshiro128ss ],
     [ "PCG32 (wasm)", pcg32],
     [ "Math.random", {
         uint32: () => (Math.random() * 0x100000000) >>> 0,
