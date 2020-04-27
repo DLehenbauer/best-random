@@ -3,6 +3,13 @@ import { strict as assert } from "assert";
 import { check } from "./util";
 
 describe(RNG.constructor.name, () => {
+    it("Produces expected values", () => {
+        const rnd = new Random(/* seed: */ 42);
+        assert.equal(rnd.float64(), 0.60829943369486);
+        assert.equal(rnd.uint32(), 803767485);
+        assert.equal(rnd.uint53(), 6835035088404228);
+    });
+
     it("matches reference implementation", () => {
         // After scrambling the seed, results in an initial state of:
         // [1208447044, 2481403967, 821779568, 4026114934]
@@ -25,13 +32,13 @@ describe(RNG.constructor.name, () => {
 
         assert.deepEqual(actual, expected);
     });
-
+    
     it("Unspecified seed numbers default to zero", () => {
         const same = [
             new Random(0),
             new Random(0, 0),
             new Random(0, 0, 0),
-            new Random(0, 0, 0, 0)
+            new Random(0, 0, 0, 0),
         ].map(rnd => rnd.uint53());
 
         for (let i = 1; i < same.length; i++) {
@@ -39,7 +46,7 @@ describe(RNG.constructor.name, () => {
         }
     });
 
-    it("If no unspecified, seed values are randomly chosen", () => {
+    it("If no seeds are specified values are randomly chosen", () => {
         assert.notEqual(new Random().uint53(), new Random().uint53());
     });
 

@@ -1,37 +1,10 @@
-import { Suite } from "benchmark";
+import { run } from "hotloop";
 import { generators } from "./generators";
-import { Random } from "../dist";
 
-const rngs = generators.filter(([name]) => name.match("best") || name.match("x"));
+const rngs = [...generators.keys()];
 
-
-function bench<K extends keyof Random>(g: K) {
-    const suite = new Suite(`${g}`);
-    for (const [name, rng] of rngs) {
-        const src = rng[g];
-        if (src !== undefined) {
-            suite.add(`${name}`, src as any);
-        }
+(async () => {
+    for (const mode of ["uint32", "float64"]) {
+        await run(rngs.map((name) => ({ path: "./test.ts", args: { generatorName: name, mode }})));
     }
-    run(suite);
-}
-
-bench("uint32");
-bench("float64");
-
-function run(suite: Suite) {
-    console.log();
-    console.group((suite as any)["name"]);
-    return suite
-        .on("cycle", (event: any) => {
-            console.log(String(event.target));
-        })
-        .on("error", (event: any) => {
-            console.error(String(event.target.error));
-        })
-        .on("complete", (event: any) => {
-            console.groupEnd();
-            console.log(`Fastest is ${event.currentTarget.filter("fastest").map("name")}`);
-        })
-        .run();
-}
+})();
