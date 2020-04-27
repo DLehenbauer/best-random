@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+    
         {
             "type": "node",
             "request": "launch",
@@ -39,8 +40,38 @@
             "request": "launch",
             "name": "BinOut",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/tools/binout.js",
-            "args": [ "uint53", "0" ],
+            "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
+            "args": [ "${workspaceFolder}/tools/binout.js", "uint53", "0" ],
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Flaw",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
+            "args": [ "${workspaceFolder}/tools/flaw.ts" ],
+            "disableOptimisticBPs": true,
+            "console": "integratedTerminal"
+        }
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Prospect",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
+            "args": [ "${workspaceFolder}/tools/prospect/prospect.ts" ],
+            "disableOptimisticBPs": true,
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Prospect2",
+            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/node_modules/ts-node/dist/bin.js",
+            "args": [ "${workspaceFolder}/tools/prospect/prospect2.ts" ],
+            "disableOptimisticBPs": true,
             "console": "integratedTerminal"
         }
     ]

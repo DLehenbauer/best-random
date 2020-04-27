@@ -1,7 +1,7 @@
 import { strict as assert } from "assert";
 import { Random } from "../src";
 
-function chisquared(u32: () => number) {
+export function chisquared(u32: () => number) {
     for (let j = 0; j < 10; j++) {
         // Clear before each iteration.
         const bytes = [
@@ -34,7 +34,7 @@ function chisquared(u32: () => number) {
             x2 /= e;
 
             const d = Math.abs(x2 - r);
-            const max = 4 * Math.sqrt(r);
+            const max = 4.5 * Math.sqrt(r);
 
             assert(d <= max, `Iteration ${j}, for byte${i}: Expected d <= '${max}', but got '${d}'.`);
         }
@@ -72,4 +72,59 @@ export function check(src: Random) {
         it("uint53() (hi)", () => {  chisquared(() => (src.uint53() / 0x200000) >>> 0); });
         it("float64()", () => {  chisquared(() => (src.float64() * 0x100000000) >>> 0); });
     });
+}
+
+function lsh(v: number, k: number) {
+    return k < 32
+        ? (v << k) >>> 0
+        : 0
+}
+
+export class BitStream {
+    private pendingBits = 0;
+    private numPending = 0;
+
+    constructor(
+        private readonly sink: (u32: number) => void,
+    ) { }
+
+    push(v: number) {
+        let hi32 = (v / 0x200000) >>> 0;
+        const lo21 = (v << 11) >>> 0;
+
+        const fromHi = 32 - this.numPending;
+        const hiBits = (hi32 >>> (32 - fromHi)) >>> 0;
+        const v1 = (this.pendingBits | hiBits) >>> 0;
+        this.sink(v1);
+        
+        this.pendingBits = lsh(hi32, fromHi);
+        this.numPending = 32 - fromHi;
+
+        const fromLo = Math.min(32 - this.numPending, 21);
+        const loBits = (lo21 >>> (32 - fromLo) << (32 - fromLo)) >>> this.numPending;
+        this.pendingBits = (this.pendingBits | loBits) >>> 0;
+        this.numPending += fromLo;
+
+        if (this.numPending === 32) {
+            this.sink(this.pendingBits);
+            this.numPending = 21 - fromLo;
+            this.pendingBits = (lo21 << fromLo) >>> 0;
+        }
+    }
+}
+
+export class BufferedBitStream {
+    private readonly bitstream: BitStream;
+    private readonly queued: number[] = [];
+
+    constructor(private readonly src: () => number) {
+        this.bitstream = new BitStream((u32: number) => this.queued.push(u32));
+    }
+
+    public readonly uint32 = () => {
+        if (this.queued.length === 0) {
+            this.bitstream.push(this.src());
+        }
+        return this.queued.shift()!;
+    }
 }

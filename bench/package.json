@@ -1,0 +1,25 @@
+{
+  "name": "best-random-bench",
+  "version": "0.0.1",
+  "description": "Benchmark suite for 'best-random'",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DLehenbauer/best-random.git"
+  },
+  "author": "Daniel Lehenbauer",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DLehenbauer/best-random/issues"
+  },
+  "homepage": "https://github.com/DLehenbauer/best-random#readme",
+  "dependencies": {
+    "@types/seedrandom": "^2.4.28",
+    "@types/benchmark": "^1.0.31",
+    "@types/node": "^13.7.4",
+    "benchmark": "^2.1.4",
+    "rimraf": "^3.0.2",
+    "seedrandom": "^3.0.5",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.8.2"
+  }
+}

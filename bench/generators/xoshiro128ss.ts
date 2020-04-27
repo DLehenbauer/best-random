@@ -1,7 +1,7 @@
 import { RandomCtor, Random } from "../../dist";
 
-export const Xorshift128: RandomCtor =
-    function(...seed: number[]): Random {
+export const Xoshiro128ss: RandomCtor =
+    function (...seed: number[]): Random {
         seed = seed.length
             ? seed
             : [...new Array(4)].map(() => Math.random() * 0x100000000)
@@ -12,29 +12,36 @@ export const Xorshift128: RandomCtor =
             const s = seed[(i - 1) & 3];
             seed[i & 3] ^= i + Math.imul(0x6C078965, (s ^ (s >>> 30)) >>> 0) >>> 0;
         }
-  
+
         const s = {
             x: seed[0] | 0,
             y: seed[1] | 0,
             z: seed[2] | 0,
             w: seed[3] | 0,
-        }
+        };
 
         const uint32 = () => {
-            const t = s.x ^ (s.x << 11);
+            const rotl = (v: number, k: number) => {
+                return (v << k) | (v >>> (32 - k));
+            }
 
-            s.x = s.y;
-            s.y = s.z;
-            s.z = s.w;
-        
-            s.w = s.w ^ (s.w >>> 19) ^ (t ^ (t >>> 8));
+            // Adapted from the code included on Sebastian Vigna's website.
+            // (see http://prng.di.unimi.it/xoshiro128starstar.c)
 
-            return s.w >>> 0;
+            const result = (rotl(s.y * 5, 7) * 9) >>> 0;
+            const t = s.y << 9;
+
+            s.z ^= s.x;
+            s.w ^= s.y;
+            s.y ^= s.z;
+            s.x ^= s.w;
+            s.z ^= t;
+            s.w = rotl(s.w, 11);
+
+            return result;
         }
 
-        // Note: XorShift is known to produce weak lower bits.  To help compensate, we discard the low
-        //       bits of both 32b samples when constructing a 53b value.
-        const uint53 = () => ((uint32() >>> 6) * 0x8000000) + (uint32() >>> 5);
+        const uint53 = () => uint32() * 0x200000 + (uint32() >>> 11);
 
         return {
             uint32,

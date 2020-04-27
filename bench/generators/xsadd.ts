@@ -1,50 +1,43 @@
-import { Random, RandomCtor } from "../../src";
+import { RandomCtor, Random } from "../../dist";
 
-// XORSHIFT-ADD (XSadd) (see http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/XSADD/).
 export const XSadd: RandomCtor =
-    function(seed0?: number, seed1?: number, seed2?: number, seed3?: number): Random {
-        const seed = new Uint32Array(
-            arguments.length === 0
-                ? [...new Array(4)].map(() => Math.random() * 0x100000000)
-                : [seed0, seed1, seed2, seed3].map((s) => s == null ? 0 : +s)
-        );
-    
-        do {
-            // Scramble the initial seeds using a LCG w/Borosh-Niederreiter multiplier.  This serves to both
-            // fill in unspecified seed values as well as reduce corelation between similar initial seeds.
-            for (let i = 1; i < 8; i++) {
-                const s = seed[(i - 1) & 3];
-                seed[i & 3] ^= i + Math.imul(0x6C078965, (s ^ (s >>> 30)) >>> 0) >>> 0;
-            }
+    function(...seed: number[]): Random {
+        seed = seed.length
+            ? seed
+            : [...new Array(4)].map(() => Math.random() * 0x100000000)
+        seed.length = 4;
 
-            // Perf: Using `var` instead of `let` yields a ~45% speed increase (node v12 x64).
-            var [x, y, z, w] = seed;
-
-            // The XorShift family of algorithms have a fixed-point at 0.  Avoid all-zeros by repeating the
-            // initial scrambling.
-        } while ((x | y | z | w) === 0);
+        // Scramble the initial state using a Borosh-Niederreiter generator.
+        for (let i = 1; (i < 8) || (seed[0] | seed[1] | seed[2] | seed[3]) === 0; i++) {
+            const s = seed[(i - 1) & 3];
+            seed[i & 3] ^= i + Math.imul(0x6C078965, (s ^ (s >>> 30)) >>> 0) >>> 0;
+        }
+  
+        const s = {
+            x: seed[0] | 0,
+            y: seed[1] | 0,
+            z: seed[2] | 0,
+            w: seed[3] | 0,
+        }
 
         const uint32 = () => {
-            let t = x;
-            x = y;
-            y = z;
-            z = w;
+            let t = s.x;
+            s.x = s.y;
+            s.y = s.z;
+            s.z = s.w;
 
             t ^= t << 15;
             t ^= t >>> 18;
-            t ^= w << 11;
+            t ^= s.w << 11;
 
-            w = t;
+            s.w = t;
 
-            return (w + z) >>> 0;
-        };
-
-        // Discard the first 8 results.
-        for (let i = 0; i < 8; i++) {
-            uint32();
+            return (s.w + s.z) >>> 0;
         }
 
-        const uint53 = () => ((uint32() >>> 6) * 0x8000000) + ((w + y) >>> 5);
+        // Note: XSadd is known to produce weak lower bits.  To help compensate, we discard the low
+        //       bits of both 32b samples when constructing a 53b value.
+        const uint53 = () => ((uint32() >>> 6) * 0x8000000) + (uint32() >>> 5);
 
         return {
             uint32,
