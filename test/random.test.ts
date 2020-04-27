@@ -10,6 +10,7 @@ describe(RNG.constructor.name, () => {
         assert.equal(rnd.uint53(), 1933207184009787);
     });
 
+    
     it("Unspecified seed numbers default to zero", () => {
         const same = [
             new Random(0),
@@ -23,7 +24,7 @@ describe(RNG.constructor.name, () => {
         }
     });
 
-    it("If no unspecified, seed values are randomly chosen", () => {
+    it("If no seeds are specified values are randomly chosen", () => {
         assert.notEqual(new Random().uint53(), new Random().uint53());
     });
 

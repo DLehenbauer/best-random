@@ -7,7 +7,7 @@ export const Xoshiro128ss: RandomCtor =
             : [...new Array(4)].map(() => Math.random() * 0x100000000)
         seed.length = 4;
 
-        // Scramble the initial state using a Borosh-Niederreiter generator.
+        // Avoid fixed points at 0 by scrambling the initial state using a Borosh-Niederreiter generator.
         for (let i = 1; (i < 8) || (seed[0] | seed[1] | seed[2] | seed[3]) === 0; i++) {
             const s = seed[(i - 1) & 3];
             seed[i & 3] ^= i + Math.imul(0x6C078965, (s ^ (s >>> 30)) >>> 0) >>> 0;

@@ -1,4 +1,4 @@
-import { Random } from "../../dist";
+import { Random } from "../..";     // Use minified version of 'Random'
 import { PCG32 } from "./pcg32";
 import { XSadd } from "./xsadd";
 import { Xorshift32 } from "./xorshift32";
@@ -52,4 +52,4 @@ const r2 = [
     }]
 });
 
-export const generators = r1.concat(r2);
+export const generators = new Map<string, Partial<Random>>(r1.concat(r2));
