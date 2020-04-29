@@ -61,17 +61,16 @@ function meetsThreshold(_cycle: ICycleInfo) {
 const [,, partitionSizeArg, partitionAssignmentArg] = process.argv;
 
 const partitionSize = parseInt(partitionSizeArg);
-const partitionAssignment = parseInt(partitionAssignmentArg);
+const partitionAssignment = parseInt(partitionAssignmentArg) + 8;
 const minM = (partitionSize * partitionAssignment) | 1;
 const maxM = minM + partitionSize - 1;
 
 console.log(`[${hex(minM)}..${hex(maxM)}]:`);
 
-const outputStream = fs.createWriteStream(`./cycle-${partitionAssignment}.json`);
-outputStream.uncork();
-outputStream.write(`[\n`);
-
-let pendingEOL = false;
+const fd = fs.openSync(`./cycle-${partitionAssignment}.json`, "w");
+const write = (str: string) => {
+    fs.writeSync(fd, str);
+};
 
 try {
     for (M = minM; M <= maxM; M += 2) {
@@ -82,13 +81,8 @@ try {
                     cycle = t(cycle.cycleStart);
                 }
                 if (meetsThreshold(cycle)) {
-                    if (pendingEOL) {
-                        outputStream.write(`,\n`);
-                    }
-
                     const config = `{ "M": ${M}, "C1": ${C1}, "len": ${cycle.cycleLength} }`;
-                    outputStream.write(`  ${config}`);
-                    pendingEOL = true;
+                    write(`  ${config},\n`);
 
                     const s = cycle.cyclePerc > 90
                         ? "*".repeat(Math.max(0, (((cycle.cyclePerc - 90) ** 2) / 10) | 0))
@@ -98,8 +92,9 @@ try {
                 }
             }
         }
+
+        fs.fsyncSync(fd);
     }
 } finally {
-    outputStream.write(`\n]\n`);
-    outputStream.close();
+    fs.closeSync(fd);
 }
