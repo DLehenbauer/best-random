@@ -3,8 +3,10 @@ import { hex } from "./utils";
 
 let a: any[] = [];
 
-for (let i = 0; i <= 7; i++) {
-    a = a.concat(JSON.parse(`[${fs.readFileSync(`cycle-${i}.json`).toString().slice(0, -1)}]`));
+for (let i = 0; i <= 15; i++) {
+    const filename = `cycle-${i}.json`;
+    console.log(`${filename}:`)
+    a = a.concat(JSON.parse(`[${fs.readFileSync(filename).toString().trim().slice(0, -1)}]`));
 }
 
 a.sort((left: any, right: any) => right.len - left.len);
