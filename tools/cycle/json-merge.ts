@@ -1,9 +1,9 @@
 import * as fs from "fs";
-import { hex } from "./utils";
+import { hex } from "../utils";
 
 let a: any[] = [];
 
-for (let i = 0; i <= 15; i++) {
+for (let i = 0; i <= 23; i++) {
     const filename = `cycle-${i}.json`;
     console.log(`${filename}:`)
     a = a.concat(JSON.parse(`[${fs.readFileSync(filename).toString().trim().slice(0, -1)}]`));

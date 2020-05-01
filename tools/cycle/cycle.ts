@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { hex, rot, isPrime } from "./utils";
+import { hex, rot, isPrime } from "../utils";
 export { hex, rot, isPrime };
 
 interface ICycleInfo {
@@ -61,13 +61,13 @@ function meetsThreshold(_cycle: ICycleInfo) {
 const [,, partitionSizeArg, partitionAssignmentArg] = process.argv;
 
 const partitionSize = parseInt(partitionSizeArg);
-const partitionAssignment = parseInt(partitionAssignmentArg) + 8;
+const partitionAssignment = parseInt(partitionAssignmentArg) + (8 * 2);
 const minM = (partitionSize * partitionAssignment) | 1;
 const maxM = minM + partitionSize - 1;
 
 console.log(`[${hex(minM)}..${hex(maxM)}]:`);
 
-const fd = fs.openSync(`./cycle-${partitionAssignment}.json`, "w");
+const fd = fs.openSync(`./cycle-${partitionAssignment}.json`, "wx");
 const write = (str: string) => {
     fs.writeSync(fd, str);
 };
