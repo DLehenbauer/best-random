@@ -3,7 +3,7 @@ import { hex } from "../utils";
 
 let a: any[] = [];
 
-for (let i = 0; i <= 39; i++) {
+for (let i = 0; i <= 47; i++) {
     const filename = `cycle-${i}.json`;
     console.log(`${filename}:`)
     a = a.concat(JSON.parse(`[${fs.readFileSync(filename).toString().trim().slice(0, -1)}]`));
