@@ -61,7 +61,7 @@ function meetsThreshold(_cycle: ICycleInfo) {
 const [,, partitionSizeArg, partitionAssignmentArg] = process.argv;
 
 const partitionSize = parseInt(partitionSizeArg);
-const partitionAssignment = parseInt(partitionAssignmentArg) + (8 * 6);
+const partitionAssignment = parseInt(partitionAssignmentArg) + (8 * 7);
 const minM = (partitionSize * partitionAssignment) | 1;
 const maxM = minM + partitionSize - 1;
 
