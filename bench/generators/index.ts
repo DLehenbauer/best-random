@@ -4,7 +4,6 @@ import { XSadd } from "./xsadd";
 import { Xorshift32 } from "./xorshift32";
 import { Xorshift128 } from "./xorshift128";
 import { Jsf32 } from "./jsf32";
-import { Xoshiro128ss } from "./xoshiro128ss";
 import seedrandom = require("seedrandom");
 
 const best = new Random(0);
@@ -12,16 +11,14 @@ const xsadd = new XSadd(0);
 const xorshift32 = new Xorshift32(0);
 const xorshift128 = new Xorshift128(0);
 const jsf32 = new Jsf32(0);
-const xoshiro128ss = new Xoshiro128ss(0);
 const pcg32 = new PCG32(0, 0);
 
 const r1: [string, Partial<Random>][] = [
     [ "best-random", best ],
     [ "xsadd", xsadd ],
+    [ "xorshift128", xorshift128 ],
     [ "jsf32", jsf32 ],
     [ "xorshift32", xorshift32 ],
-    [ "xorshift128", xorshift128 ],
-    [ "xoshiro128ss", xoshiro128ss ],
     [ "PCG32 (wasm)", pcg32],
     [ "Math.random", {
         uint32: () => (Math.random() * 0x100000000) >>> 0,
@@ -38,13 +35,13 @@ const xor4096 = { name: "xor4096 (seedrandom)", ...seedrandom.xor4096() };
 const xorshift7 = { name: "xorshift7 (seedrandom)", ...seedrandom.xorshift7() };
 
 const r2 = [
-    sdr,
-    alea,
-    xor128,
-    tychei,
     xorwow,
+    xor128,
     xor4096,
-    xorshift7
+    tychei,
+    xorshift7,
+    alea,
+    sdr,
 ].map<[string, Partial<Random>]>(rng => {
     return [rng.name, {
         uint32: rng.int32,

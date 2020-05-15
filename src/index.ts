@@ -73,14 +73,14 @@ export const Random: RandomCtor =
         } while ((s.x | s.y | s.z | s.w) === 0);
 
         const uint32 = () => {
-            const rotl = (v: number, k: number) => {
+            const rot = (v: number, k: number) => {
                 return (v << k) | (v >>> (32 - k));
             }
 
             // Adapted from the code included on Sebastian Vigna's website.
             // (see http://prng.di.unimi.it/xoshiro128starstar.c)
 
-            const result = (rotl(s.y * 5, 7) * 9) >>> 0;
+            const result = (rot(s.y * 5, 7) * 9) >>> 0;
             const t = s.y << 9;
         
             s.z ^= s.x;
@@ -88,7 +88,7 @@ export const Random: RandomCtor =
             s.y ^= s.z;
             s.x ^= s.w;
             s.z ^= t;
-            s.w = rotl(s.w, 11);
+            s.w = rot(s.w, 11);
         
             return result;
         }

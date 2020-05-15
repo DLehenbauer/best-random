@@ -1,25 +1,32 @@
 import { RandomCtor, Random } from "../../dist";
 
 export const XSadd: RandomCtor =
-    function(...seed: number[]): Random {
+    function(this: { x: number, y: number, z: number, w: number }, ...seed: number[]): Random {
+        var s = this;
+
         seed = seed.length
             ? seed
             : [...new Array(4)].map(() => Math.random() * 0x100000000)
         seed.length = 4;
 
-        // Avoid fixed points at 0 by scrambling the initial state using a Borosh-Niederreiter generator.
-        for (let i = 1; (i < 8) || (seed[0] | seed[1] | seed[2] | seed[3]) === 0; i++) {
-            const s = seed[(i - 1) & 3];
-            seed[i & 3] ^= i + Math.imul(0x6C078965, (s ^ (s >>> 30)) >>> 0) >>> 0;
-        }
-  
-        const s = {
-            x: seed[0] | 0,
-            y: seed[1] | 0,
-            z: seed[2] | 0,
-            w: seed[3] | 0,
-        }
+        do {
+            // Scramble the initial seeds using a LCG w/Borosh-Niederreiter multiplier.  This serves to both
+            // fill in unspecified seed values as well as reduce corelation between similar initial seeds.
+            for (let i = 1; i < 8; i++) {
+                const s = seed[(i - 1) & 3];
+                seed[i & 3] ^= i + Math.imul(0x6C078965, (s ^ (s >>> 30)) >>> 0) >>> 0;
+            }
 
+            // Perf: Avoid destructuring in order for v8 to recognize x/y/z/w as Int32 value (node v12 x64).
+            s.x = seed[0];
+            s.y = seed[1];
+            s.z = seed[2];
+            s.w = seed[3];
+
+            // The XorShift family of algorithms have a fixed-point at 0.  Avoid all-zeros by repeating the
+            // initial scrambling.
+        } while ((s.x | s.y | s.z | s.w) === 0);
+  
         const uint32 = () => {
             let t = s.x;
             s.x = s.y;
