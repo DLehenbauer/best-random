@@ -33,3 +33,45 @@ export const isPrime = (candidate: number) => {
 
     return candidate > 1;
 }
+
+export interface ICycleInfo {
+    length: number;
+    start: number;
+    full: boolean;
+}
+
+export const checkPeriod = (next: (previous: number) => number, start: number, threshold?: number) => {
+    const t = (start: number): ICycleInfo => {
+        let a = start;
+        let b = a;
+        let length = 0;
+        let full = false;
+    
+        while(true) {
+            a = next(a) | 0;
+
+            full = a === start;
+            if (full || a === b) {
+                break;
+            }
+    
+            if ((length & 1) === 1) {
+                b = next(b) | 0;
+            }
+
+            length++;
+        }
+    
+        return {
+            start: a,
+            length,
+            full,
+        };
+    };
+    
+    const cycle = t(start | 0);
+    
+    return threshold !== undefined && cycle.length > threshold
+        ? t(cycle.start)
+        : cycle;
+}

@@ -22,7 +22,7 @@ function go(src: () => number) {
 }
 
 const [,, genName, mode] = process.argv;
-const rng = generators.filter(([name]) => name.match(genName))[0][1];
+const rng = generators.get(genName)!;
 assert(rng, `Unrecognized generator '${genName}'`);
 
 const modes = {

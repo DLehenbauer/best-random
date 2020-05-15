@@ -1,13 +1,6 @@
 import * as fs from "fs";
-import { hex, rot, isPrime } from "../utils";
+import { hex, rot, isPrime, checkPeriod } from "../utils";
 export { hex, rot, isPrime };
-
-interface ICycleInfo {
-    cycleLength: number;
-    cycleStart: number;
-    cyclePerc: number;
-    full: boolean;
-}
 
 let C1 = 0;
 let M = 0;
@@ -26,42 +19,11 @@ const next = (a: number) => {
     return rot(Math.imul(a, M), C1);
 }
 
-const t = (start: number): ICycleInfo => {
-    let a = start | 0;
-    let b = a;
-    let cycleLength = 0;
-    let full = false;
-
-    for (; cycleLength <= 0x100000000; cycleLength++) {
-        a = next(a) | 0;
-        full = a === start;
-        if (full || a === b) {
-            break;
-        }
-
-        if ((cycleLength & 1) === 1) {
-            b = next(b) | 0;
-        }
-    }
-
-    return {
-        cycleStart: a,
-        cycleLength,
-        cyclePerc:
-        (cycleLength / 0xFFFFFFFF) * 100,
-        full,
-    };
-};
-
-function meetsThreshold(_cycle: ICycleInfo) {
-    return true;
-    // return cycle.cycleLength >= 0xfff00000;
-}
-
 const [,, partitionSizeArg, partitionAssignmentArg] = process.argv;
 
+const threshold = 0;
 const partitionSize = parseInt(partitionSizeArg);
-const partitionAssignment = parseInt(partitionAssignmentArg) + (8 * 10);
+const partitionAssignment = parseInt(partitionAssignmentArg) + (8 * 11);
 const minM = (partitionSize * partitionAssignment) | 1;
 const maxM = minM + partitionSize - 1;
 
@@ -75,21 +37,17 @@ const write = (str: string) => {
 try {
     for (M = minM; M <= maxM; M += 2) {
         for (C1 = 0; C1 <= 31; C1++) {
-            let cycle = t(M);
-            if (meetsThreshold(cycle)) {
-                if (!cycle.full) {
-                    cycle = t(cycle.cycleStart);
-                }
-                if (meetsThreshold(cycle)) {
-                    const config = `{ "M": ${M}, "C1": ${C1}, "len": ${cycle.cycleLength} }`;
-                    write(`  ${config},\n`);
+            let cycle = checkPeriod(next, M);
+            if (cycle.length >= threshold) {
+                const config = `{ "M": ${M}, "C1": ${C1}, "len": ${cycle.length} }`;
+                write(`  ${config},\n`);
 
-                    const s = cycle.cyclePerc > 90
-                        ? "*".repeat(Math.max(0, (((cycle.cyclePerc - 90) ** 2) / 10) | 0))
-                        : "";
+                const percent = (cycle.length / 0xFFFFFFFF) * 100;
+                const s = percent > 90
+                    ? "*".repeat(Math.max(0, (((percent - 90) ** 2) / 10) | 0))
+                    : "";
 
-                    console.log(`${config.padEnd(50)}// len=${hex(cycle.cycleLength)} ${cycle.cyclePerc.toFixed(2)}% \t${s}`);
-                }
+                console.log(`${config.padEnd(50)}// len=${hex(cycle.length)} ${percent.toFixed(2)}% \t${s}`);
             }
         }
 
