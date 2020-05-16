@@ -24,7 +24,7 @@ const [,, partitionSizeArg, partitionAssignmentArg] = process.argv;
 const threshold = 0;
 const partitionSize = parseInt(partitionSizeArg);
 const partitionAssignment = parseInt(partitionAssignmentArg) + (8 * 11);
-const minM = (partitionSize * partitionAssignment) | 1;
+const minM = (partitionSize * partitionAssignment) | 1;2
 const maxM = minM + partitionSize - 1;
 
 console.log(`[${hex(minM)}..${hex(maxM)}]:`);
