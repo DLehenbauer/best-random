@@ -58,16 +58,17 @@ int main(int argc, char *argv[]) {
     rng_init();
 
     while (1) {
+        uint64_t raw = rng_u64();
         uint32_t value;
 
         if (emitLo) {
-            value = rng_u32l();
+            value = raw;
             if (reverse) { value = reverse32(value); }
             write(value);
         }
 
         if (emitHi) {
-            value = rng_u32h();
+            value = raw >> 32;
             if (reverse) { value = reverse32(value); }
             write(value);
         }

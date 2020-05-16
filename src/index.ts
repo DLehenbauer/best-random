@@ -42,8 +42,6 @@ export interface RandomCtor {
     new (seed0: number, seed1: number, seed2: number, seed3: number): Random;
 }
 
-const C = 0x9e3779b9 as const;
-
 export const Random: RandomCtor =
     function(...seed: number[]): Random {
         seed = seed.length
@@ -54,12 +52,12 @@ export const Random: RandomCtor =
             x: seed[0] | 0, y: seed[1] | 0, z: seed[2] | 0, w: seed[3] | 0, c: 0
         };
 
-        const mix = (a: number, b: number, c: number) => {
+        const mix = (a: number, b: number) => {
             const rot = (v: number, k: number) => (v << k) | (v >>> (32 - k));
 
-            a += rot(Math.imul(b, 61), 12);
-            a -= rot(Math.imul(c, 23), 23);
-            return a >>> 0;
+            b = rot(b * 16777619, 16);
+            a ^= a >>> 16;
+            return a + b;
         }
         
         const uint32 = () => {
@@ -68,20 +66,18 @@ export const Random: RandomCtor =
             s.y = s.z;
             s.z = s.w;
 
-            s.c = (s.c + C) | 0;
-
             t ^= t << 15;      // x (lo 17b)  0fedcba9 87654321 0....... ........
             t ^= t >>> 18;     // x (hi 14b)  ........ ........ ..fedcba 98765432
             t ^= s.w << 11;    // w (lo 21b)  43210fed cba98765 43210... ........           
 
             s.w = t;
             
-            return mix(s.z, s.c - s.w, s.x);
+            return mix(s.x - s.z, s.y - s.w);
         }
 
         while (!(s.z)) { s.z = 3; uint32(); }
 
-        const uint32lo = () => mix(s.c - s.y, s.x, -s.z);
+        const uint32lo = () => mix(s.w - s.y, s.z - s.x);
         const uint53 = () => uint32() * 0x200000 + (uint32lo() >>> 11);
         
         return {
