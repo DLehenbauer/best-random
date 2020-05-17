@@ -21,6 +21,7 @@ int usage(char *name)
     printf("  -l = low32 bits\n");
     printf("  -r = reverse bits\n");
     printf("  -v = verbose\n");
+    printf("  -x = loop\n");
     return 1;
 }
 
@@ -45,15 +46,14 @@ static int sorted_result_cmp(const void *left, const void *right)
                      : 0;
 }
 
-bool run(void (*battery)(unif01_Gen *gen)) {
-    unif01_Gen *gen = createGenerator(arg_hi, arg_lo, arg_rev);
+int totalIterations = 0;
+double totalRun = 0;
+double totalUnusual = 0;
+double totalSuspicious = 0;
+double totalFailed = 0;
+unif01_Gen *gen = NULL;
 
-    if (gen == NULL)
-    {
-        fprintf(stderr, "Error: Must specify high (-h) or low (-l)\n");
-        return false;
-    }
-
+bool run(char* name, void (*battery)(unif01_Gen *gen)) {
     battery(gen);
     
     struct sorted_result_t *results = malloc(bbattery_NTests * sizeof(struct sorted_result_t));
@@ -68,11 +68,26 @@ bool run(void (*battery)(unif01_Gen *gen)) {
 
     qsort(results, bbattery_NTests, sizeof *results, sorted_result_cmp);
 
-    bool passed = true;
+    int numFailed = 0;
+    int numSuspicious = 0;
+    int numUnusual = 0;
 
     for (int i = 0; i < bbattery_NTests; i++)
     {
-        bool testPassed = (bbattery_pVal[i] >= gofw_Suspectp) && (bbattery_pVal[i] <= 1.0 - gofw_Suspectp);
+        bool testPassed = results[i].delta >= gofw_Suspectp;
+
+        if (!testPassed)
+        {
+            numFailed++;
+        }
+        else if (results[i].delta < 0.005)
+        {
+            numSuspicious++;    
+        }
+        else if (results[i].delta < 0.01)
+        {
+            numUnusual++;
+        }
 
         printf("     %-30s %f%s\n",
             results[i].name,
@@ -80,14 +95,27 @@ bool run(void (*battery)(unif01_Gen *gen)) {
             testPassed
                 ? ""
                 : " FAIL!");
-
-        passed &= testPassed;
     }
 
-    free(results);
-    unif01_DeleteExternGenBits(gen);
+    printf("\n%s %s: %d/%d passed (%d unusual, %d suspicious)%s\n",
+        gen->name,
+        name,
+        bbattery_NTests - numFailed,
+        bbattery_NTests,
+        numUnusual,
+        numSuspicious,
+        numFailed == 0
+            ? ""
+            : " - FAIL!");
 
-    return passed;
+    totalRun += bbattery_NTests;
+    totalFailed += numFailed;
+    totalSuspicious += numSuspicious;
+    totalUnusual += numUnusual;
+
+    free(results);
+
+    return numFailed == 0;
 }
 
 int main(int argc, char *argv[])
@@ -96,6 +124,7 @@ int main(int argc, char *argv[])
     bool arg_small = false;
     bool arg_medium = false;
     bool arg_big = false;
+    bool arg_loop = false;
 
     for (int i = 1; i < argc; i++)
     {
@@ -127,6 +156,10 @@ int main(int argc, char *argv[])
         {
             swrite_Basic = TRUE;
         }
+        else if (strcmp(argv[i], "-x") == 0)
+        {
+            arg_loop = TRUE;
+        }
         else
         {
             fprintf(stderr, "Error: Invalid argument '%s'.\n", argv[i]);
@@ -134,21 +167,44 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (arg_small)
+    gen = createGenerator(arg_hi, arg_lo, arg_rev);
+    if (gen == NULL)
     {
-        if (!run(bbattery_SmallCrush)) { return 1; }
+        fprintf(stderr, "Error: Must specify high (-h) or low (-l)\n");
+        return 1;
     }
-    else if (arg_medium)
-    {
-        if (!run(bbattery_Crush)) { return 1; }
-    }
-    else if (arg_big)
-    {
-        if (!run(bbattery_BigCrush)) { return 1; }
-    }
-    else
-    {
-        fprintf(stderr, "Error: No test battery specified\n");
-        return usage(argv[0]);
-    }
+
+    do {
+        if (arg_small)
+        {
+            if (!run("SmallCrush", bbattery_SmallCrush) && !arg_loop) { return 1; }
+        }
+        else if (arg_medium)
+        {
+            if (!run("Crush", bbattery_Crush) && !arg_loop) { return 1; }
+        }
+        else if (arg_big)
+        {
+            if (!run("BigCrush", bbattery_BigCrush) && !arg_loop) { return 1; }
+        }
+        else
+        {
+            fprintf(stderr, "Error: No test battery specified\n");
+            return usage(argv[0]);
+        }
+
+        if (arg_loop) {
+            totalIterations++;
+
+            printf("  (Iteration# %d, total failed: %.2f%% suspicious %.2f%% unusual: %.2f%%)\n",
+                totalIterations,
+                (totalFailed / totalRun) * 100,
+                (totalSuspicious / totalRun) * 100,
+                (totalUnusual / totalRun) * 100);
+        }
+    } while (arg_loop);
+
+    printf("\n");
+
+    unif01_DeleteExternGenBits(gen);
 }
