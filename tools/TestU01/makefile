@@ -7,7 +7,10 @@ stdin:
 	gcc -std=c99 -Wall -O3 -fomit-frame-pointer -march=native -mtune=native -o TestU01_stdin TestU01_stdin.c -Iinclude -Llib -ltestu01 -lprobdist -lmylib -lm
 
 rng:
-	gcc -std=c99 -Wall -O3 -fomit-frame-pointer -march=native -mtune=native -o TestU01_rng TestU01_rng.c ../rng/rng.c -Iinclude -Llib -ltestu01 -lprobdist -lmylib -lm
+	gcc -std=c99 -Wall -O3 -fomit-frame-pointer -march=native -mtune=native -o TestU01_rng TestU01_rng.c main.c ../rng/rng.c -Iinclude -Llib -ltestu01 -lprobdist -lmylib -lm
+
+pcg:
+	gcc -std=c99 -Wall -O3 -fomit-frame-pointer -march=native -mtune=native -o TestU01_rng TestU01_pcg.c main.c generators/pcg_basic.c -Iinclude -Llib -ltestu01 -lprobdist -lmylib -lm
 
 testu01:
 	mkdir -p src

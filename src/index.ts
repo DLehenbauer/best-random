@@ -44,6 +44,8 @@ export interface RandomCtor {
 
 export const Random: RandomCtor =
     function(...seed: number[]): Random {
+        const C = 0x9e3779b9 as const;
+
         seed = seed.length
             ? seed
             : [...new Array(4)].map(() => Math.random() * 0x100000000);
@@ -55,8 +57,9 @@ export const Random: RandomCtor =
         const mix = (a: number, b: number) => {
             const rot = (v: number, k: number) => (v << k) | (v >>> (32 - k));
 
-            b = rot(b * 16777619, 16);
-            a ^= a >>> 16;
+            a = rot(a, b);
+            a += rot(Math.imul(b, 16777619), 16);
+            a ^= a >>> 17;
             return a + b;
         }
         
@@ -66,18 +69,20 @@ export const Random: RandomCtor =
             s.y = s.z;
             s.z = s.w;
 
+            s.c = (s.c + C) | 0;
+
             t ^= t << 15;      // x (lo 17b)  0fedcba9 87654321 0....... ........
             t ^= t >>> 18;     // x (hi 14b)  ........ ........ ..fedcba 98765432
             t ^= s.w << 11;    // w (lo 21b)  43210fed cba98765 43210... ........           
 
             s.w = t;
             
-            return mix(s.x - s.z, s.y - s.w);
+            return mix(s.x, s.z - s.c);
         }
 
         while (!(s.z)) { s.z = 3; uint32(); }
 
-        const uint32lo = () => mix(s.w - s.y, s.z - s.x);
+        const uint32lo = () => mix(s.w, s.c - s.y);
         const uint53 = () => uint32() * 0x200000 + (uint32lo() >>> 11);
         
         return {

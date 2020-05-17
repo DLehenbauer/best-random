@@ -58,3 +58,13 @@ Notes:
 | 0x9e3779b9 = 2654435769 = (3)(89)(523)(19009) | [Golden ratio](https://softwareengineering.stackexchange.com/questions/402542/where-do-magic-hashing-constants-like-0x9e3779b9-and-0x9e3779b1-come-from) |
 | 0x6d2b79f5 = 1831565813 = (7)(11)(859)(27691) | [Mulberry32](https://gist.github.com/tommyettinger/46a874533244883189143505d203312c) |
 | 362437 | [xorwow](https://en.wikipedia.org/wiki/Xorshift#xorwow) |
+
+# Permutations
+|  shift  | range |
+|---------|-------|
+| a >> 27 | 0..31 |
+| a >> 28 | 0..15 |
+| a >> 29 |  0..7 |
+| a >> 30 |  0..3 |
+| a >> 31 |  0..1 |
+

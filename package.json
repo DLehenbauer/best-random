@@ -14,6 +14,7 @@
     "test:u53": "npm run build && cd tools && ts-node binout.ts best-random uint53 0 | RNG_Test stdin -seed 0 -tf 2 -te 1 -multithreaded",
     "test:u53l": "npm run build && cd tools && ts-node binout.ts best-random uint53lo 0 | RNG_Test stdin32 -seed 0 -tf 2 -te 1 -multithreaded",
     "make:rng": "npm run make:rng:stdout && npm run make:testu01:rng",
+    "make:rng:pcg": "cd tools/testu01 && make pcg",
     "make:rng:stdout": "cd tools/rng && make",
     "make:testu01": "cd tools/testu01 && make",
     "make:testu01:rng": "cd tools/testu01 && make rng",
@@ -49,6 +50,8 @@
     "allcrush:u32hr": "npm run smallcrush:u32hr:x5 && npm run crush:u32hr && npm run bigcrush:u32hr",
     "allcrush:u32l": "npm run smallcrush:u32l:x5 && npm run crush:u32l && npm run bigcrush:u32l",
     "allcrush:u32lr": "npm run smallcrush:u32lr:x5 && npm run crush:u32lr && npm run bigcrush:u32lr",
+    "allcrush": "npm run make:rng && tmux new-session 'sh -c \"npm run allcrush:u32h\"; npm run waitforkey' \\; split-window -p 50 -v 'sh -c \"npm run allcrush:u32hr\"; npm run waitforkey' \\; split-window -h -p 50 'sh -c \"npm run allcrush:u32lr\"; npm run waitforkey' \\; select-pane -t 0 \\; split-window -h -p 50 'sh -c \"npm run allcrush:u32l\"; npm run waitforkey' \\; attach",
+    "allcrush:pcg": "npm run make:rng:pcg && tmux new-session 'sh -c \"npm run allcrush:u32h\"; npm run waitforkey' \\; split-window -p 50 -v 'sh -c \"npm run allcrush:u32hr\"; npm run waitforkey' \\; split-window -h -p 50 'sh -c \"npm run allcrush:u32lr\"; npm run waitforkey' \\; select-pane -t 0 \\; split-window -h -p 50 'sh -c \"npm run allcrush:u32l\"; npm run waitforkey' \\; attach",
     "test:all": "npm run make:rng && tmux new-session 'sh -c \"npm run allcrush:u64; npm run waitforkey\"' \\; split-window -p 66 -v 'sh -c \"npm run allcrush:u64r; npm run waitforkey\"' \\; split-window -p 50 -v 'sh -c \"npm run practrand:128b:u64 -- -singlethreaded; npm run waitforkey\"' \\; select-pane -t 0 \\; split-window -h -p 66 'sh -c \"npm run allcrush:u32h; npm run waitforkey\"' \\; split-window -h -p 50 'sh -c \"npm run allcrush:u32hr; npm run waitforkey\"' \\; select-pane -t 3 \\; split-window -h -p 66 'sh -c \"npm run allcrush:u32l; npm run waitforkey\"' \\; split-window -h -p 50 'sh -c \"npm run allcrush:u32lr; npm run waitforkey\"' \\; select-pane -t 6 \\; split-window -h -p 50 'sh -c \"npm run practrand:64b:u64 -- -singlethreaded; npm run waitforkey\"' \\; npm run waitforkey' \\; attach",
     "pause": "ps -a | grep -ie \"RNG_Test\\|TestU01_rng\" | awk '{print $1}' | xargs kill -TSTP",
     "resume": "ps -a | grep -ie \"RNG_Test\\|TestU01_rng\" | awk '{print $1}' | xargs kill -CONT"
