@@ -35,12 +35,9 @@ unif01_Gen *createGenerator(bool high32, bool low32, bool reversed)
     uint32_t z = (intptr_t) &gettimeofday;
     uint32_t w = (intptr_t) &gen32;
 
-    for (int i = 0; i < 7; i++) {
-        gen32_high();
-    }
-
-    printf("\nseed: %x %x %x %x\n", x, y, z, w);
     rng_init(x, y, z, w);
+
+    printf("\nseed: %08x %08x %08x %08x\n", x, y, z, w);
 
     if (high32)
     {
