@@ -56,6 +56,8 @@ unif01_Gen *gen = NULL;
 
 bool run(char* name, void (*battery)(unif01_Gen *gen))
 {
+    totalIterations++;
+
     srand((unsigned) time(NULL));
     gen = createGenerator(arg_hi, arg_lo, arg_rev);
 
@@ -212,8 +214,6 @@ int main(int argc, char *argv[])
         }
 
         if (arg_loop) {
-            totalIterations++;
-
             printf("  Total case failure rate: %.2f%% (suspicious %.2f%% unusual: %.2f%%)\n",
                 (totalFailed / totalRun) * 100,
                 (totalSuspicious / totalRun) * 100,
