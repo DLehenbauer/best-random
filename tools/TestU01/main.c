@@ -53,7 +53,17 @@ double totalSuspicious = 0;
 double totalFailed = 0;
 unif01_Gen *gen = NULL;
 
-bool run(char* name, void (*battery)(unif01_Gen *gen)) {
+bool run(char* name, void (*battery)(unif01_Gen *gen))
+{
+    srand((unsigned) time(NULL));
+    gen = createGenerator(arg_hi, arg_lo, arg_rev);
+
+    if (gen == NULL)
+    {
+        fprintf(stderr, "Error: Must specify high (-h) or low (-l)\n");
+        return 1;
+    }
+
     battery(gen);
     
     struct sorted_result_t *results = malloc(bbattery_NTests * sizeof(struct sorted_result_t));
@@ -113,7 +123,8 @@ bool run(char* name, void (*battery)(unif01_Gen *gen)) {
     totalSuspicious += numSuspicious;
     totalUnusual += numUnusual;
 
-    free(results);
+    free(results);    
+    unif01_DeleteExternGenBits(gen);
 
     return numFailed == 0;
 }
@@ -167,13 +178,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    gen = createGenerator(arg_hi, arg_lo, arg_rev);
-    if (gen == NULL)
-    {
-        fprintf(stderr, "Error: Must specify high (-h) or low (-l)\n");
-        return 1;
-    }
-
     do {
         if (arg_small)
         {
@@ -205,6 +209,4 @@ int main(int argc, char *argv[])
     } while (arg_loop);
 
     printf("\n");
-
-    unif01_DeleteExternGenBits(gen);
 }
