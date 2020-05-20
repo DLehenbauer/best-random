@@ -26,6 +26,15 @@ export const undoXorShiftRight = (x: number, i: number) => {
     return x;
 }
 
+export function popcount(x: number) {
+    x -= x >> 1 & 0x55555555;
+    x = (x & 0x33333333) + (x >> 2 & 0x33333333);
+    x = x + (x >> 4) & 0x0f0f0f0f;
+    x += x >> 8;
+    x += x >> 16;
+    return x & 0x7f;
+}
+
 export const isPrime = (candidate: number) => {
     for(let i = 2, stop = Math.sqrt(candidate); i <= stop; i++) {
         if (candidate % i === 0) { return false; }

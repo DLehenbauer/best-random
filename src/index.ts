@@ -57,10 +57,9 @@ export const Random: RandomCtor =
         const mix = (a: number, b: number) => {
             const rot = (v: number, k: number) => (v << k) | (v >>> (32 - k));
 
-            a = rot(a, b);
-            a += rot(Math.imul(b, 16777619), 16);
-            a ^= a >>> 17;
-            return a + b;
+            a += rot(Math.imul(b, 16777619), b);
+            a ^= a >>> ((b >>> 30) + 14);
+            return (a + b) >>> 0;
         }
         
         const uint32 = () => {
