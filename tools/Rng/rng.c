@@ -26,9 +26,8 @@ void advance() {
 }
 
 uint32_t mix(uint32_t a, uint32_t b) {
-    a = rot(a, b);
-    a += rot(b * 16777619, 16);
-    a ^= a >> 17;
+    a += rot(b * 16777619, b);
+    a ^= a >> ((b >> 30) + 14);
     return a + b;
 }
 
