@@ -80,7 +80,9 @@ export const Random: RandomCtor =
             return mix(s.x, s.z - s.c);
         }
 
-        while (!(s.z)) { s.z = 3; uint32(); }
+        for (let i = 0; i < 9 || !s.w; i++) {
+            s.w = uint32();
+        }
 
         const uint32lo = () => mix(s.w, s.c - s.y);
         const uint53 = () => uint32() * 0x200000 + (uint32lo() >>> 11);

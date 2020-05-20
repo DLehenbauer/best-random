@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include <stdio.h>
-#include <sys/time.h>
 #include "TestU01.h"
 #include "common.h"
 #include "../rng/rng.h"
@@ -27,13 +26,10 @@ uint32_t gen32_rev() { return reverse32(gen32()); }
 
 unif01_Gen *createGenerator(bool high32, bool low32, bool reversed)
 {
-    struct timeval start;
-    gettimeofday(&start, NULL);
-
-    uint32_t x = start.tv_sec * 1000000 + start.tv_usec;
-    uint32_t y = (intptr_t) &printf;
-    uint32_t z = (intptr_t) &gettimeofday;
-    uint32_t w = (intptr_t) &gen32;
+    uint32_t x = seed();
+    uint32_t y = seed();
+    uint32_t z = seed();
+    uint32_t w = seed();
 
     rng_init(x, y, z, w);
 
