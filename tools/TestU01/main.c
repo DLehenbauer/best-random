@@ -84,17 +84,19 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
 
     for (int i = 0; i < bbattery_NTests; i++)
     {
-        bool testPassed = results[i].delta >= gofw_Suspectp;
+        bool testFailed = results[i].delta < gofw_Suspectp;
+        bool testSuspicious = !testFailed && results[i].delta < 0.005;
+        bool testUnusual    = !testSuspicious && results[i].delta < 0.01;
 
-        if (!testPassed)
+        if (testFailed)
         {
             numFailed++;
         }
-        else if (results[i].delta < 0.005)
+        else if (testSuspicious)
         {
             numSuspicious++;    
         }
-        else if (results[i].delta < 0.01)
+        else if (testUnusual)
         {
             numUnusual++;
         }
@@ -102,18 +104,20 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
         printf("     %-30s %f%s\n",
             results[i].name,
             results[i].delta,
-            testPassed
-                ? ""
-                : " FAIL!");
+            testFailed
+                ? "    FAIL!"
+                : testSuspicious
+                    ? "    suspicious"
+                    : testUnusual
+                        ? "    unusual"
+                        : "");
     }
 
-    printf("\n%s %s: %d/%d passed (%d unusual, %d suspicious)%s\n",
+    printf("\n%s %s: %d/%d passed%s\n",
         gen->name,
         name,
         bbattery_NTests - numFailed,
         bbattery_NTests,
-        numUnusual,
-        numSuspicious,
         numFailed == 0
             ? ""
             : " - FAIL!");
@@ -200,7 +204,7 @@ int main(int argc, char *argv[])
         if (arg_loop) {
             totalIterations++;
 
-            printf("  (Iteration# %d, total failed: %.2f%% suspicious %.2f%% unusual: %.2f%%)\n",
+            printf("Iteration# %d, total failed: %.2f%% suspicious %.2f%% unusual: %.2f%%\n",
                 totalIterations,
                 (totalFailed / totalRun) * 100,
                 (totalSuspicious / totalRun) * 100,
