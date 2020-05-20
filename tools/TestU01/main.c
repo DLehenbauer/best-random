@@ -86,7 +86,7 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
     for (int i = 0; i < bbattery_NTests; i++)
     {
         bool testFailed = results[i].delta < gofw_Suspectp;
-        bool testSuspicious = !testFailed && results[i].delta < 0.005;
+        bool testSuspicious = !testFailed && results[i].delta < 0.0025;
         bool testUnusual    = !testSuspicious && results[i].delta < 0.01;
 
         if (testFailed)
