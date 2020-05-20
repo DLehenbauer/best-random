@@ -47,6 +47,7 @@ static int sorted_result_cmp(const void *left, const void *right)
 }
 
 int totalIterations = 0;
+int totalIterationsFailed = 0;
 double totalRun = 0;
 double totalUnusual = 0;
 double totalSuspicious = 0;
@@ -100,6 +101,10 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
         {
             numUnusual++;
         }
+        else if (!swrite_Basic)
+        {
+            continue;
+        }
 
         printf("     %-30s %f%s\n",
             results[i].name,
@@ -113,11 +118,11 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
                         : "");
     }
 
-    printf("\n%s %s: %d/%d passed%s\n",
+    printf("\n%s %s: Passed %d/%d iterations%s\n",
         gen->name,
         name,
-        bbattery_NTests - numFailed,
-        bbattery_NTests,
+        totalIterations - totalIterationsFailed,
+        totalIterations,
         numFailed == 0
             ? ""
             : " - FAIL!");
@@ -129,6 +134,11 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
 
     free(results);    
     unif01_DeleteExternGenBits(gen);
+
+    if (numFailed > 0) {
+        totalIterationsFailed++;
+        return false;
+    }
 
     return numFailed == 0;
 }
@@ -204,8 +214,7 @@ int main(int argc, char *argv[])
         if (arg_loop) {
             totalIterations++;
 
-            printf("Iteration# %d, total failed: %.2f%% suspicious %.2f%% unusual: %.2f%%\n",
-                totalIterations,
+            printf("  Total case failure rate: %.2f%% (suspicious %.2f%% unusual: %.2f%%)\n",
                 (totalFailed / totalRun) * 100,
                 (totalSuspicious / totalRun) * 100,
                 (totalUnusual / totalRun) * 100);
