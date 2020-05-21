@@ -13,7 +13,7 @@ extern unif01_Gen *createGenerator(bool high32, bool low32, bool reversed);
 int usage(char *name)
 {
     printf("\n");
-    printf("Usage: %s [-s] [-c] [-b] [-h] [-l] [-r] [-v]\n", name);
+    printf("Usage: %s [-s|-c|-b] [-h] [-l] [-r] [-v] [-x <loopcount>]\n", name);
     printf("  -s = SmallCrush\n");
     printf("  -c = Crush\n");
     printf("  -b = BigCrush\n");
@@ -46,17 +46,18 @@ static int sorted_result_cmp(const void *left, const void *right)
                      : 0;
 }
 
-int totalIterations = 0;
-int totalIterationsFailed = 0;
-double totalRun = 0;
-double totalUnusual = 0;
-double totalSuspicious = 0;
-double totalFailed = 0;
+uint32_t remainingIterations = 1;
+uint32_t totalIterationsRun = 0;
+uint32_t totalIterationsFailed = 0;
+double totalCasesRun = 0;
+double totalCasesUnusual = 0;
+double totalCasesSuspicious = 0;
+double totalCasesFailed = 0;
 unif01_Gen *gen = NULL;
 
 bool run(char* name, void (*battery)(unif01_Gen *gen))
 {
-    totalIterations++;
+    totalIterationsRun++;
 
     srand((unsigned) time(NULL));
     gen = createGenerator(arg_hi, arg_lo, arg_rev);
@@ -120,27 +121,26 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
                         : "");
     }
 
+    if (numFailed > 0) {
+        totalIterationsFailed++;
+    }
+
     printf("\n%s %s: Passed %d/%d iterations%s\n",
         gen->name,
         name,
-        totalIterations - totalIterationsFailed,
-        totalIterations,
+        totalIterationsRun - totalIterationsFailed,
+        totalIterationsRun,
         numFailed == 0
             ? ""
             : " - FAIL!");
 
-    totalRun += bbattery_NTests;
-    totalFailed += numFailed;
-    totalSuspicious += numSuspicious;
-    totalUnusual += numUnusual;
+    totalCasesRun += bbattery_NTests;
+    totalCasesFailed += numFailed;
+    totalCasesSuspicious += numSuspicious;
+    totalCasesUnusual += numUnusual;
 
     free(results);    
     unif01_DeleteExternGenBits(gen);
-
-    if (numFailed > 0) {
-        totalIterationsFailed++;
-        return false;
-    }
 
     return numFailed == 0;
 }
@@ -151,7 +151,6 @@ int main(int argc, char *argv[])
     bool arg_small = false;
     bool arg_medium = false;
     bool arg_big = false;
-    bool arg_loop = false;
 
     for (int i = 1; i < argc; i++)
     {
@@ -185,41 +184,54 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(argv[i], "-x") == 0)
         {
-            arg_loop = TRUE;
+            if (++i < argc)
+            {
+                if (sscanf (argv[i], "%i", &remainingIterations) != 1)
+                {
+                    fprintf(stderr, "\nError: -x must be followed by a loop count, but got non-integer '%s'.\n", argv[i]);
+                    return usage(argv[0]);
+                }
+            }
+            else
+            {
+                fprintf(stderr, "\nError: -x must be followed by a loop count.\n");
+                return usage(argv[0]);
+            }
         }
         else
         {
-            fprintf(stderr, "Error: Invalid argument '%s'.\n", argv[i]);
+            fprintf(stderr, "\nError: Invalid argument '%s'.\n", argv[i]);
             return usage(argv[0]);
         }
     }
 
-    do {
+    do
+    {
         if (arg_small)
         {
-            if (!run("SmallCrush", bbattery_SmallCrush) && !arg_loop) { return 1; }
+            run("SmallCrush", bbattery_SmallCrush);
         }
         else if (arg_medium)
         {
-            if (!run("Crush", bbattery_Crush) && !arg_loop) { return 1; }
+            run("Crush", bbattery_Crush);
         }
         else if (arg_big)
         {
-            if (!run("BigCrush", bbattery_BigCrush) && !arg_loop) { return 1; }
+            run("BigCrush", bbattery_BigCrush);
         }
         else
         {
-            fprintf(stderr, "Error: No test battery specified\n");
+            fprintf(stderr, "\nError: Must specify a test battery [-s|-c|-b].\n");
             return usage(argv[0]);
         }
 
-        if (arg_loop) {
-            printf("  Total case failure rate: %.2f%% (suspicious %.2f%% unusual: %.2f%%)\n",
-                (totalFailed / totalRun) * 100,
-                (totalSuspicious / totalRun) * 100,
-                (totalUnusual / totalRun) * 100);
-        }
-    } while (arg_loop);
+        printf("  Total case failure rate: %.2f%% (suspicious %.2f%% unusual: %.2f%%)\n",
+            (totalCasesFailed / totalCasesRun) * 100,
+            (totalCasesSuspicious / totalCasesRun) * 100,
+            (totalCasesUnusual / totalCasesRun) * 100);
+    }
+    while ((--remainingIterations) > 0);
 
     printf("\n");
+    return totalIterationsFailed > 0 ? 1 : 0;
 }
