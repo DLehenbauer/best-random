@@ -1,6 +1,6 @@
 {
   "name": "best-random",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A replacement for Math.random() that is tiny, fast, seedable, and has good statistical properties.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,7 @@
     "bench": "npm run build && cd bench && ts-node index.ts",
     "build": "gulp",
     "clean": "git clean -Xfd -e tools/RNG_Test.exe",
-    "prepublishOnly": "git reset --hard head && git clean -xfd && npm i && npm run build && npm t && cd bench && npm i && npm run bench",
+    "prepublishOnly": "git reset --hard head && git clean -xfd && npm i && npm run build && npm t",
     "test": "cd test && jest",
     "test:u32": "npm run build && cd tools && ts-node binout.ts best-random uint32 0 | RNG_Test stdin32 -seed 0 -tf 2 -te 1 -multithreaded",
     "test:u53": "npm run build && cd tools && ts-node binout.ts best-random uint53 0 | RNG_Test stdin -seed 0 -tf 2 -te 1 -multithreaded",
