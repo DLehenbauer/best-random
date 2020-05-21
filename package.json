@@ -8,9 +8,8 @@
   "scripts": {
     "bench": "npm run build && cd bench && ts-node index.ts",
     "build": "gulp",
-    "clean": "rimraf ./dist",
-    "postinstall": "cd bench && npm i",
-    "prepublishOnly": "npm run clean && npm run build && npm t",
+    "clean": "git clean -Xfd -e tools/RNG_Test.exe",
+    "prepublishOnly": "git reset --hard head && git clean -xfd && npm i && npm run build && npm t && cd bench && npm i && npm run bench",
     "test": "cd test && jest",
     "test:u32": "npm run build && cd tools && ts-node binout.ts best-random uint32 0 | RNG_Test stdin32 -seed 0 -tf 2 -te 1 -multithreaded",
     "test:u53": "npm run build && cd tools && ts-node binout.ts best-random uint53 0 | RNG_Test stdin -seed 0 -tf 2 -te 1 -multithreaded",
