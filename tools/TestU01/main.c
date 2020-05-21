@@ -47,8 +47,8 @@ static int sorted_result_cmp(const void *left, const void *right)
 }
 
 uint32_t remainingIterations = 1;
-uint32_t totalIterationsRun = 0;
-uint32_t totalIterationsFailed = 0;
+double totalIterationsRun = 0;
+double totalIterationsFailed = 0;
 double totalCasesRun = 0;
 double totalCasesUnusual = 0;
 double totalCasesSuspicious = 0;
@@ -125,19 +125,25 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
         totalIterationsFailed++;
     }
 
-    printf("\n%s %s: Passed %d/%d iterations%s\n",
-        gen->name,
-        name,
-        totalIterationsRun - totalIterationsFailed,
-        totalIterationsRun,
-        numFailed == 0
-            ? ""
-            : " - FAIL!");
-
     totalCasesRun += bbattery_NTests;
     totalCasesFailed += numFailed;
     totalCasesSuspicious += numSuspicious;
     totalCasesUnusual += numUnusual;
+
+    printf("\n%s %s: Passed %d/%d iterations (%.2f%%)%s\n",
+        gen->name,
+        name,
+        (uint32_t) (totalIterationsRun - totalIterationsFailed),
+        (uint32_t) totalIterationsRun,
+        ((totalIterationsRun - totalIterationsFailed) / totalIterationsRun) * 100,
+        numFailed == 0
+            ? ""
+            : " - FAIL!");
+
+    printf("  Total case failure rate: %.2f%% (suspicious: %.2f%%, unusual: %.2f%%)\n",
+        (totalCasesFailed / totalCasesRun) * 100,
+        (totalCasesSuspicious / totalCasesRun) * 100,
+        (totalCasesUnusual / totalCasesRun) * 100);
 
     free(results);    
     unif01_DeleteExternGenBits(gen);
@@ -224,11 +230,6 @@ int main(int argc, char *argv[])
             fprintf(stderr, "\nError: Must specify a test battery [-s|-c|-b].\n");
             return usage(argv[0]);
         }
-
-        printf("  Total case failure rate: %.2f%% (suspicious %.2f%% unusual: %.2f%%)\n",
-            (totalCasesFailed / totalCasesRun) * 100,
-            (totalCasesSuspicious / totalCasesRun) * 100,
-            (totalCasesUnusual / totalCasesRun) * 100);
     }
     while ((--remainingIterations) > 0);
 
