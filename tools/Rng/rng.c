@@ -52,6 +52,6 @@ void rng_init(uint32_t s0, uint32_t s1, uint32_t s2, uint32_t s3) {
     w = s3;
 
     for (int i = 0; i < 9 || w == 0; i++) {
-        w = rng_u32h();
+        y = rng_u32h();
     }
 }
