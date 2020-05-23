@@ -1,7 +1,5 @@
 #include <stdlib.h>
 #include <stdint.h>
-#include <time.h>
-#include <sys/time.h>
 
 static inline uint32_t rot(uint32_t v, uint32_t k) { k &= 31; return (v << k) | (v >> (32 - k)); }
 
@@ -14,19 +12,16 @@ static inline uint32_t reverse32(uint32_t v)
     return rot(v, 16);
 }
 
-static inline uint32_t us() {
-    struct timeval start;
-    gettimeofday(&start, NULL);
-    return start.tv_sec * 1000000 + start.tv_usec;
-}
-
 static inline uint32_t seed()
 {
-    uint32_t result = us() ^ (intptr_t) &time;
-    for (int i = 0; i < 4; i++) {
-        result = rot(result, 8);
-        result ^= rand();
-    }
+    uint32_t x = (intptr_t) &rand;
 
-    return result;
+    // Note: RAND_MAX is implementation dependent, but guaranteed to be at least 15b (0x7fff)
+    x ^= rand();
+    x = rot(x, 10);
+    x ^= rand();
+    x = rot(x, 11);
+    x ^= rand();
+
+    return x;
 }
