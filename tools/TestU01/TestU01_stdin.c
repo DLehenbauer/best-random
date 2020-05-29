@@ -1,5 +1,3 @@
-#include "TestU01.h"
-
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
@@ -8,6 +6,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+#include "TestU01.h"
+#include "common.h"
 
 #define ELEMENT_COUNT 255
 #define BUFFER_SIZE (sizeof(uint32_t) * ELEMENT_COUNT)
@@ -26,7 +26,7 @@ int usage(char *name)
     return 1;
 }
 
-static inline uint64_t stdin32bit()
+static inline uint32_t stdin32bit()
 {
     static uint32_t buffer32[ELEMENT_COUNT];
     static int i = ELEMENT_COUNT;
@@ -47,16 +47,6 @@ inline uint64_t stdin64bit()
     uint8_t bufferRead = fread(&uint64bit, sizeof(uint64_t), 1, stdin);
     assert(bufferRead);
     return uint64bit;
-}
-
-inline uint32_t reverse32(uint32_t v)
-{
-    v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
-    v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2);
-    v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4);
-    v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8);
-    v = (v >> 16) | (v << 16);
-    return v;
 }
 
 inline uint32_t high32(uint64_t v) { return (uint32_t)(v >> 32); }

@@ -1,4 +1,3 @@
-#include "TestU01.h"
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
@@ -7,6 +6,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+#include "TestU01.h"
+#include "common.h"
 
 extern unif01_Gen *createGenerator(bool high32, bool low32, bool reversed);
 
@@ -59,7 +60,6 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
 {
     totalIterationsRun++;
 
-    srand((unsigned) time(NULL));
     gen = createGenerator(arg_hi, arg_lo, arg_rev);
 
     if (gen == NULL)
@@ -210,6 +210,8 @@ int main(int argc, char *argv[])
             return usage(argv[0]);
         }
     }
+
+    init_seed(0);
 
     do
     {
