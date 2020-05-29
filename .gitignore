@@ -6,3 +6,5 @@
 
 # Exclude PractRand binary
 tools/RNG_Test.exe
+
+/*.log
