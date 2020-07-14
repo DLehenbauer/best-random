@@ -5,20 +5,26 @@ export const Xorshift32: RandomCtor =
         const s = {
             y: (seed[0] === undefined
                 ? (Math.random() * 0x100000000)
-                : seed[0]) || 0x49616E42,
+                : seed[0]) || 0x49616E42,           // Avoid the fixed point at y = 0.
         }
 
         const uint32 = () => {
             let y = s.y;
 
-            // Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs"
+            // Algorithm "xor" from top of p. 4 of Marsaglia, "Xorshift RNGs"
+            // https://www.jstatsoft.org/article/view/v008i14/xorshift.pdf
+            //
+            // Note that 'y=y>>17' is a typo in the original paper and should be 'y^=y>>17' as
+            // per the 1st general form 'y^=y<<a; y^=y>>b; y^=y<<c;' given on p. 3.
             y ^= y << 13;
             y ^= y >>> 17;
             y ^= y << 5;
     
             s.y = y;
     
-            return ~(y >>> 0);
+            // Note that the XorShift32 algorithm produces a values in the range
+            // [0x00000001..0xFFFFFFFF] inclusive.  (i.e., it never produces zero.)
+            return y >>> 0;
         }
 
         // Note: XorShift is known to produce weak lower bits.  To help compensate, we discard the low
