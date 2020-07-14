@@ -93,11 +93,11 @@ readInterface.on("close", () => {
 
     let deltas = [];
     for (const row of remaining) {
-        const delta = row.delta;
+        const delta = row.delta + 32;               // +32 to avoid negative array indices
         deltas[delta] = (deltas[delta] | 0) + 1;
     }
 
-    deltas = deltas.map((count, index) => ({ delta: index, count }));
+    deltas = deltas.map((count, index) => ({ delta: index - 32, count }));  // -32 to compensate for above.
 
     console.table(deltas.sort((left, right) => right.count - left.count));
 });
