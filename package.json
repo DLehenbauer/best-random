@@ -22,6 +22,7 @@
     "screen:smallcrush": "npm run make:rng && npm run practrand:u64:core && npm run smallcrush:loop:core",
     "screen:crush": "npm run make:rng && npm run practrand:u64:core && npm run crush:loop:core",
     "screen:bigcrush": "npm run make:rng && npm run practrand:u64:core && npm run bigcrush:loop:core",
+    "practrand": "npm run make:rng && cd tools/rng && ./rng | ../PractRand/RNG_Test stdin64 -seed 0 -tf 2 -te 1 -multithreaded",
     "practrand:u64": "cd tools/rng && ./rng | ../PractRand/RNG_Test stdin64 -seed 0 -tf 2 -te 1 -multithreaded",
     "practrand:u32h": "cd tools/rng && ./rng -h | ../PractRand/RNG_Test stdin32 -seed 0 -tf 2 -te 1 -multithreaded",
     "practrand:u32hr": "cd tools/rng && ./rng -h -r | ../PractRand/RNG_Test stdin32 -seed 0 -tf 2 -te 1 -multithreaded",
@@ -46,6 +47,7 @@
     "bigcrush:loop:core": "tmux respawn-pane -t 0 -k 'sh -c \"npm run --silent smallcrush:u32h -- -x 5 && npm run --silent bigcrush:u32h -- -x 0 2>&1 | tee u32h.log\"; npm run waitforkey' \\; select-pane -t 0 \\; split-window -h -p 50 'sh -c \"npm run --silent smallcrush:u32l -- -x 5 && npm run --silent bigcrush:u32l -- -x 0 2>&1 | tee u32l.log\"; npm run waitforkey' \\; split-window -v -p 50 'sh -c \"npm run --silent smallcrush:u32lr -- -x 5 && npm run --silent bigcrush:u32lr -- -x 0 2>&1 | tee u32lr.log\"; npm run waitforkey' \\; select-pane -t 0 \\; split-window -v -p 50 'sh -c \"npm run --silent smallcrush:u32hr -- -x 5 && npm run --silent bigcrush:u32hr -- -x 0 2>&1 | tee u32hr.log\"; npm run waitforkey' \\; attach",
     "smallcrush:pcg": "npm run make:rng:pcg && tmux new-session -s screen -d 'npm run waitforkey' && npm run smallcrush:loop:core",
     "crush:pcg": "npm run make:rng:pcg && tmux new-session -s screen -d 'npm run waitforkey' && npm run crush:loop:core",
+    "crush": "npm run make:testu01:rng && tmux new-session -s screen -d 'npm run waitforkey' && npm run crush:loop:core",
     "pause": "ps -a | grep -ie \"RNG_Test\\|TestU01_rng\" | awk '{print $1}' | xargs kill -TSTP",
     "resume": "ps -a | grep -ie \"RNG_Test\\|TestU01_rng\" | awk '{print $1}' | xargs kill -CONT"
   },
