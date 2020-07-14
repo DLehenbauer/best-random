@@ -12,13 +12,22 @@
 static bool emitHi = true;
 static bool emitLo = true;
 static bool reverse = false;
+static uint32_t p0 = 0;
+static uint32_t p1 = 0;
 
-bool parseArg(char* arg) {
-    if (strcmp(arg, "-h") == 0)   { emitLo = false; return emitHi; }
-    if (strcmp(arg, "-l") == 0)   { emitHi = false; return emitLo; }
-    if (strcmp(arg, "-r") == 0)   { reverse = true; return true; }
+int parseArg(int argc, char* argv[], int i) {
+    char* arg = argv[i++];
+    if (strcmp(arg, "-h") == 0)   { emitLo = false; return emitHi ? i : 0; }
+    if (strcmp(arg, "-l") == 0)   { emitHi = false; return emitLo ? i : 0; }
+    if (strcmp(arg, "-r") == 0)   { reverse = true; return i; }
 
-    return false;
+    if (i >= argc) { return 0; }
+
+    uint32_t p = atoi(argv[i++]);
+    if (strcmp(arg, "-p0") == 0)  { p0 = p; return i; }
+    if (strcmp(arg, "-p1") == 0)  { p1 = p; return i; }
+
+    return 0;
 }
 
 static inline void write(uint32_t value) {
@@ -37,8 +46,9 @@ int main(int argc, char *argv[]) {
     FILE* fp = freopen(NULL, "wb", stdout);  // Only necessary on Windows, but harmless.
     assert(fp);
 
-    for (int i = 1; i < argc; i++) {
-        if (!parseArg(argv[i])) {
+    for (int i = 1; i < argc;) {
+        i = parseArg(argc, argv, i);
+        if (i == 0) {
             fprintf(stderr, "%s [-h] [-l] [-r]\n", argv[0]);
             fprintf(stderr, "    -h = high 32bits only\n");
             fprintf(stderr, "    -l = low 32bits only\n");
@@ -48,7 +58,7 @@ int main(int argc, char *argv[]) {
     }
 
     init_seed(0);
-    rng_init(seed(), seed(), seed(), seed());
+    rng_init(seed(), seed(), seed(), seed(), p0, p1);
 
     while (1) {
         uint64_t raw = rng_u64();

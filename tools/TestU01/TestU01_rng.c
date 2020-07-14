@@ -31,8 +31,11 @@ unif01_Gen *createGenerator(bool high32, bool low32, bool reversed)
     uint32_t z = seed();
     uint32_t w = seed();
 
-    printf("\nNext seed: %08x %08x %08x %08x\n", x, y, z, w);
-    rng_init(x, y, z, w);
+    const uint32_t p0 = 1;
+    const uint32_t p1 = 10;
+
+    printf("\nNext seed: %08x %08x %08x %08x (p0=%d p1=%d)\n", x, y, z, w, p0, p1);
+    rng_init(x, y, z, w, p0, p1);
 
     if (high32)
     {
