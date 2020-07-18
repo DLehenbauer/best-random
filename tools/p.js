@@ -3,8 +3,15 @@
 const assert = require("assert").strict;
 const fs = require('fs');
 const readline = require('readline');
+const chalk = require('chalk');
 
-const table = [];
+const table = new Array(32 * 32).fill(undefined).map(() => ({
+    length: 0,
+    failures: 0,
+    suspicious: 0,
+    unusual: 0,
+    anomalies: 0,
+}));
 
 function toIndex(p0, p1) {
     assert(0 <= p0 && p0 < 32);
@@ -27,6 +34,7 @@ async function parseFile(filename) {
 
         let p0 = -1, p1 = -1;
         let length = 0;
+        let lastLength = -1;
         let anomalies = 0;
         let unusual = 0;
         let suspicious = 0;
@@ -45,9 +53,20 @@ async function parseFile(filename) {
 
             if (p0 >= 0) {
                 const i = toIndex(p0, p1);
-                table[i] = { p0, p1, delta: p1 - p0, length, failures, suspicious, unusual, anomalies };
+                const row = table[i];
+                table[i] = {
+                    p0,
+                    p1,
+                    delta: p1 - p0,
+                    length: Math.max(row.length, length),
+                    failures: Math.max(row.failures, failures),
+                    suspicious: Math.max(row.suspicious, suspicious),
+                    unusual: Math.max(row.unusual, unusual),
+                    anomalies: Math.max(row.anomalies, anomalies)
+                };
             }
 
+            lastLength = length;
             length = -1;
             anomalies = 0;
             unusual = 0;
@@ -62,8 +81,7 @@ async function parseFile(filename) {
                     const next0 = parseInt(matches[1]);
                     const next1 = parseInt(matches[2]);
 
-                    assert((next0 === p0 && next1 === p1 + 1)
-                        || (next0 === p0 + 1 && next1 === 0));
+                    assert(next0 > p0 || (next0 === p0 && next1 > p1));
 
                     record();
                 
@@ -89,12 +107,26 @@ async function parseFile(filename) {
 
         readInterface.on("close", () => {
             record();
-            accept(table);
+            accept({ table, p0, p1, lastLength });
         });        
     });
 }
 
-function showMap() {
+const colorFn = (row, isCurrent, currentLength) => {
+    if (isCurrent) {
+        return chalk.bgGray(chalk.black(currentLength));
+    }
+
+    return row.failures > 0
+        ? chalk.gray("..")
+        : row.suspicious > 0
+            ? chalk.red(row.length)
+            : row.length < 42
+                ? chalk.yellow(row.length)
+                : chalk.white(row.length);
+}
+
+function showMap(c0, c1, currentLength, fn = colorFn) {
     let line = "  , ";
     for (let p0 = 0; p0 < 32; p0++) {
         line += `${p0}`.padStart(2, " ") + ", ";
@@ -105,33 +137,32 @@ function showMap() {
         line = `${p0}`.padStart(2, " ") + ", ";
         for (let p1 = 0; p1 < 32; p1++) {
             const row = getRow(p0, p1);
-            line += `${
-                (row.failures) > 0
-                    ? ".."
-                    : row.length
-            }, `;
+            line += `${fn(row, p0 === c0 && p1 === c1, currentLength)}, `;
         }
 
         console.log(line);
     }
 }
 
-function genScript() {
-    console.log("npm run make:rng");
-    console.log("cat ./rng/rng.c | tee u64.log")
+function showMapSkewed(fn = colorFn) {
+    let line = "  , ";
     for (let p0 = 0; p0 < 32; p0++) {
-        for (let p1 = 0; p1 < 32; p1++) {
-            const row = getRow(p0, p1);
-            if (row.failures === 0) {
-                console.log(`(echo ">>> p0=${p0}, p1=${p1}" && ./rng/rng -p0 ${p0} -p1 ${p1} | stdbuf -oL -eL ./PractRand/RNG_Test stdin64 -seed 0 -tf 2 -te 1 -multithreaded 2>&1) | tee -a u64.log`);
-            }
+        line += `${p0}`.padStart(2, " ") + ", ";
+    }
+    console.log(line);
+
+    for (let p0 = 0; p0 < 32; p0++) {
+        line = `${p0}`.padStart(2, " ") + ", ";
+        for (let p1 = p0; p1 < 32 + p0; p1++) {
+            const row = getRow(p0, p1 % 32);
+            line += `${fn(row)}, `;
         }
+
+        console.log(line);
     }
 }
 
-parseFile("rr-u64-64gb.log").then(async () => {
-    await parseFile("rr-u64-512gb.log");
-
+function showTable() {
     const remaining = table
         .filter((row) => row.failures + row.suspicious === 0)
         .sort((left, right) => right.length - left.length)
@@ -149,7 +180,27 @@ parseFile("rr-u64-64gb.log").then(async () => {
     deltas = deltas.map((count, index) => ({ delta: index - 32, count }));  // -32 to compensate for above.
 
     console.table(deltas.sort((left, right) => right.count - left.count));
+}
 
-    showMap();
-    genScript("256GB");
+function genScript(limit) {
+    console.log("npm run make:rng");
+    console.log("cat ./rng/rng.c | tee u64.log")
+    for (let p0 = 0; p0 < 32; p0++) {
+        for (let p1 = 0; p1 < 32; p1++) {
+            const row = getRow(p0, p1);
+            if (row.failures === 0) {
+                console.log(`(echo ">>> p0=${p0}, p1=${p1}" && ./rng/rng -p0 ${p0} -p1 ${p1} | stdbuf -oL -eL ./PractRand/RNG_Test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmax ${limit} 2>&1) | tee -a u64.log`);
+            }
+        }
+    }
+}
+
+console.clear();
+parseFile("rr-u64-64gb.log").then(async () => {
+    await parseFile("rr-u64-512gb.log");
+    const { p0, p1, lastLength } = await parseFile("u64.log");
+
+    showMap(p0, p1, lastLength);
+    // showMapSkewed(p0, p1);
+    genScript("4TB");
 });

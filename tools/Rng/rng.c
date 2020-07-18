@@ -28,8 +28,6 @@ void advance() {
     w = t;
 }
 
-// r0 = 1, r1 = 10;     // 2TB Ux0
-
 uint32_t mix(uint32_t a) {
     a = rot(a, r0);
     a += rot(y, r1);
