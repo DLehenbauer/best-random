@@ -107,26 +107,26 @@ async function parseFile(filename) {
 
         readInterface.on("close", () => {
             record();
-            accept({ table, p0, p1, lastLength });
+            accept({ table, p0, p1, length: lastLength });
         });        
     });
 }
 
-const colorFn = (row, isCurrent, currentLength) => {
+const colorFn = (row, isCurrent, length) => {
     if (isCurrent) {
-        return chalk.bgGray(chalk.black(currentLength));
+        return chalk.bgGray(chalk.black(length));
     }
 
     return row.failures > 0
         ? chalk.gray("..")
         : row.suspicious > 0
-            ? chalk.red(row.length)
-            : row.length < 42
-                ? chalk.yellow(row.length)
-                : chalk.white(row.length);
+            ? chalk.red(length)
+            : length < 42
+                ? chalk.yellow(length)
+                : chalk.white(length);
 }
 
-function showMap(c0, c1, currentLength, fn = colorFn) {
+function showMap(current, fn = colorFn) {
     let line = "  , ";
     for (let p0 = 0; p0 < 32; p0++) {
         line += `${p0}`.padStart(2, " ") + ", ";
@@ -137,7 +137,19 @@ function showMap(c0, c1, currentLength, fn = colorFn) {
         line = `${p0}`.padStart(2, " ") + ", ";
         for (let p1 = 0; p1 < 32; p1++) {
             const row = getRow(p0, p1);
-            line += `${fn(row, p0 === c0 && p1 === c1, currentLength)}, `;
+
+            let length = row.length;
+            let isCurrent = false;
+
+            for (const entry of current) {
+                if (p0 === entry.p0 && p1 === entry.p1) {
+                    isCurrent = true;
+                    length = entry.length;
+                    break;
+                }
+            }
+
+            line += `${fn(row, isCurrent, length)}, `;
         }
 
         console.log(line);
@@ -182,14 +194,14 @@ function showTable() {
     console.table(deltas.sort((left, right) => right.count - left.count));
 }
 
-function genScript(limit) {
+function genScript(limit, logFile) {
     console.log("npm run make:rng");
     console.log("cat ./rng/rng.c | tee u64.log")
     for (let p0 = 0; p0 < 32; p0++) {
         for (let p1 = 0; p1 < 32; p1++) {
             const row = getRow(p0, p1);
             if (row.failures === 0) {
-                console.log(`(echo ">>> p0=${p0}, p1=${p1}" && ./rng/rng -p0 ${p0} -p1 ${p1} | stdbuf -oL -eL ./PractRand/RNG_Test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmax ${limit} 2>&1) | tee -a u64.log`);
+                console.log(`(echo ">>> p0=${p0}, p1=${p1}" && ./rng/rng -p0 ${p0} -p1 ${p1} | stdbuf -oL -eL ./PractRand/RNG_Test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmax ${limit} 2>&1) | tee -a ${logFile}`);
             }
         }
     }
@@ -198,9 +210,13 @@ function genScript(limit) {
 console.clear();
 parseFile("rr-u64-64gb.log").then(async () => {
     await parseFile("rr-u64-512gb.log");
-    const { p0, p1, lastLength } = await parseFile("u64.log");
+    
+    const current = await Promise.all([
+        await parseFile("u64.log"),
+        await parseFile("u64-2.log"),
+    ]);
 
-    showMap(p0, p1, lastLength);
+    showMap(current);
     // showMapSkewed(p0, p1);
-    genScript("4TB");
+    // genScript("4TB", "u64-2.log");
 });
