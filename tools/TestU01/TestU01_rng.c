@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "TestU01.h"
 #include "common.h"
-#include "../rng/rng.h"
+#include "../Rng/rng.h"
 
 uint32_t gen32_high() { return rng_u32h(); }
 uint32_t gen32_high_rev() { return reverse32(gen32_high()); }
