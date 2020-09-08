@@ -195,13 +195,21 @@ function showTable() {
 }
 
 function genScript(limit, logFile) {
+    console.log(`#!/bin/bash
+
+test () {
+    p0=$1
+    p1=$2
+
+    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax ${limit} 2>&1) | tee -a ${logFile}
+}
+`)
     console.log("npm run make:rng");
-    console.log("cat ./rng/rng.c | tee u64.log")
     for (let p0 = 0; p0 < 32; p0++) {
         for (let p1 = 0; p1 < 32; p1++) {
             const row = getRow(p0, p1);
             if (row.failures === 0) {
-                console.log(`(echo ">>> p0=${p0}, p1=${p1}" && ./rng/rng -p0 ${p0} -p1 ${p1} | stdbuf -oL -eL ./PractRand/RNG_Test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmax ${limit} 2>&1) | tee -a ${logFile}`);
+                console.log(`test ${p0} ${p1}`);
             }
         }
     }
@@ -212,11 +220,10 @@ parseFile("rr-u64-64gb.log").then(async () => {
     await parseFile("rr-u64-512gb.log");
     
     const current = await Promise.all([
-        await parseFile("u64.log"),
-        await parseFile("u64-2.log"),
-    ]);
+        "mid-1", "mid-2", "pc-1", "pc-2", "slow-1", "slow-2"
+    ].map((name) => parseFile(`rr-u64-4tb-${name}.log`)));
 
-    showMap(current);
+    // showMap(current);
     // showMapSkewed(p0, p1);
-    // genScript("4TB", "u64-2.log");
+    genScript("16TB", "u64-2.log");
 });
