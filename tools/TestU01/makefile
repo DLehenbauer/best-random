@@ -15,7 +15,7 @@ pcg:
 testu01:
 	mkdir -p src
 	cd src && \
-	curl -OL http://simul.iro.umontreal.ca/testu01/TestU01.zip && \
+	wget http://simul.iro.umontreal.ca/testu01/TestU01.zip && \
 	unzip TestU01.zip && \
 	cd TestU01-1.2.3 && \
 	./configure --prefix="$(ROOT_DIR)" && \
