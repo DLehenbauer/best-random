@@ -13,11 +13,14 @@
 !/tools
 
 # ...but exclude compiled tools
-/tools/Rng/Rng
+/tools/Rng/rng
+/tools/PractRand/RNG_test
 /tools/PractRand/src
-/tools/TestU01/src
+/tools/TestU01/TestU01_rng
+/tools/TestU01/TestU01_stdin
 /tools/TestU01/bin
-/tools/TestU01/generators
-/tools/TestU01/lib
+/tools/TestU01/include
 /tools/TestU01/lib-so
+/tools/TestU01/lib
 /tools/TestU01/share
+/tools/TestU01/src

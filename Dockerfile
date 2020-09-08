@@ -20,8 +20,10 @@ RUN apt-get autoremove -y && apt-get clean -y
 WORKDIR /usr/src/best-random
 
 # Download and build PractRand and TestU01
-COPY tools/ ./tools/
+COPY ./tools/PractRand ./tools/PractRand
 RUN cd tools/PractRand && make fetchSrc
+
+COPY ./tools/TestU01 ./tools/TestU01
 RUN cd tools/TestU01 && make fetchSrc
 
 # Cache NPM modules by copying just 'package.json' and 'package-lock.json' performing the 'npm ci'.
@@ -31,10 +33,9 @@ RUN npm ci
 # Copy remaining source
 COPY ./*.json ./
 COPY ./*.js ./
-COPY ./tools/* ./tools/
-COPY ./tools/Rng ./tools/Rng
-COPY ./test ./test
 COPY ./src ./src
+COPY ./test ./test
+COPY ./tools ./tools
 
 RUN cd tools && chmod +x *.sh
 RUN npm run build
