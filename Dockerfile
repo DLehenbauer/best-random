@@ -11,6 +11,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         python \
         tmux \
         unzip \
+        vim \
         wget
 
 # Clean up
@@ -20,8 +21,8 @@ WORKDIR /usr/src/best-random
 
 # Download and build PractRand and TestU01
 COPY tools/ ./tools/
-RUN cd tools/PractRand && make
-RUN cd tools/TestU01 && make
+RUN cd tools/PractRand && make fetchSrc
+RUN cd tools/TestU01 && make fetchSrc
 
 # Cache NPM modules by copying just 'package.json' and 'package-lock.json' performing the 'npm ci'.
 COPY package*.json ./
@@ -35,6 +36,7 @@ COPY ./tools/Rng ./tools/Rng
 COPY ./test ./test
 COPY ./src ./src
 
+RUN cd tools && chmod +x *.sh
 RUN npm run build
 
 # Prevent container for terminating
