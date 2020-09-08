@@ -1,13 +1,18 @@
 #!/bin/bash
 
+logFile="rr-u64-16tb-$(echo "${0##*/}" | cut -f 1 -d '.').log"
+clear
+echo ">>> Logging to: $logFile"
+
 test () {
     p0=$1
     p1=$2
 
-    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax 16TB 2>&1) | tee -a u64-2.log
+    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax 16TB 2>&1) | tee -a $logFile
 }
 
 npm run make:rng
+echo
 test 21 2
 test 21 11
 test 21 15

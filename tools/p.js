@@ -197,14 +197,20 @@ function showTable() {
 function genScript(limit, logFile) {
     console.log(`#!/bin/bash
 
+logFile="rr-u64-16tb-$(echo "\${0##*/}" | cut -f 1 -d '.').log"
+clear
+echo ">>> Logging to: $logFile"
+
 test () {
     p0=$1
     p1=$2
 
-    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax ${limit} 2>&1) | tee -a ${logFile}
+    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax 16TB 2>&1) | tee -a $logFile
 }
+
+npm run make:rng
+echo
 `)
-    console.log("npm run make:rng");
     for (let p0 = 0; p0 < 32; p0++) {
         for (let p1 = 0; p1 < 32; p1++) {
             const row = getRow(p0, p1);
