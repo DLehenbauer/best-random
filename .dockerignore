@@ -1,0 +1,23 @@
+# Exclude everything by default
+/*
+
+# Explicitly include config files
+!/*.json
+!/*.js
+
+# Explicitly include src
+!/src
+!/test
+
+# Explicitly include tools
+!/tools
+
+# ...but exclude compiled tools
+/tools/Rng/Rng
+/tools/PractRand/src
+/tools/TestU01/src
+/tools/TestU01/bin
+/tools/TestU01/generators
+/tools/TestU01/lib
+/tools/TestU01/lib-so
+/tools/TestU01/share

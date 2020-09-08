@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+  best-random:
+    build: .
+    image: best-random
+
+    # Container requires a task to prevent it from completing
+    command: [ "/bin/bash", "-c", "sleep infinity" ]
