@@ -16,7 +16,7 @@
     "test:u53l": "npm run build && cd tools && ts-node binout.ts best-random uint53lo 0 | PractRand/RNG_test stdin32 -seed 0 -tf 2 -te 1 -multithreaded",
     "make:rng": "cd tools/Rng && make && npm run make:testu01:rng",
     "make:rng:pcg": "cd tools/TestU01 && make pcg",
-    "make:practrand": "cd tools/practrand && make",
+    "make:practrand": "cd tools/PractRand && make",
     "make:testu01": "cd tools/TestU01 && make",
     "make:testu01:rng": "cd tools/TestU01 && make rng",
     "waitforkey": "echo \"Press [Enter] key to exit...\" && read unused > /dev/null",

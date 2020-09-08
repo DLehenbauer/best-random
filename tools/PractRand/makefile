@@ -3,7 +3,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 all:
 	mkdir -p src
 	cd src && \
-	git clone https://github.com/MartyMacGyver/PractRand.git && \
+	git clone https://github.com/DLehenbauer/PractRand.git && \
 	cd PractRand && \
 	g++ -std=c++14 -c src/*.cpp src/RNGs/*.cpp src/RNGs/other/*.cpp -O3 -fomit-frame-pointer -march=native -mtune=native -Iinclude -pthread && \
 	ar rcs libPractRand.a *.o && \
