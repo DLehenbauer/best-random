@@ -13,7 +13,26 @@ test () {
 
 npm run make:rng
 echo
-test 21 2
+
+test 20 8
+test 20 9
+test 20 10
+test 20 11
+test 20 12
+test 20 13
+test 20 14
+test 20 15
+test 20 16
+test 20 17
+test 20 18
+test 20 22
+test 20 23
+test 20 24
+test 20 25
+test 20 26
+test 20 27
+test 20 29
+test 20 31
 test 21 11
 test 21 15
 test 21 17
@@ -39,7 +58,6 @@ test 22 25
 test 22 27
 test 22 29
 test 22 31
-test 23 0
 test 23 9
 test 23 11
 test 23 13

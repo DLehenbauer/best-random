@@ -224,6 +224,7 @@ echo
 console.clear();
 parseFile("rr-u64-64gb.log").then(async () => {
     await parseFile("rr-u64-512gb.log");
+    await parseFile("rr-u64-8tb-home.log");
     
     const current = await Promise.all([
         "mid-1", "mid-2", "pc-1", "pc-2", "slow-1", "slow-2"
