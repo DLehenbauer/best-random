@@ -13,6 +13,9 @@
 		"terminal.integrated.shell.linux": "/bin/bash"
 	},
 
+	// Expose Docker Daemon running on the local machine to the Docker-CLI inside container
+	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
+
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
 		"ms-azuretools.vscode-docker",
