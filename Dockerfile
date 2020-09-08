@@ -1,5 +1,6 @@
 FROM node:current-slim
 
+# Install packages required for building
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
         build-essential \
@@ -10,6 +11,9 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         tmux \
         unzip \
         wget
+
+# Clean up
+RUN apt-get autoremove -y && apt-get clean -y
 
 WORKDIR /usr/src/best-random
 
