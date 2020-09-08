@@ -8,7 +8,8 @@
   "scripts": {
     "bench": "npm run build && cd bench && ts-node index.ts",
     "build": "gulp",
-    "clean": "rimraf ./dist",
+    "clean": "git clean -xfd",
+    "prepublishOnly": "git reset --hard head && git clean -xfd && npm i && npm run build && npm t",
     "test": "cd test && jest",
     "test:u32": "npm run build && cd tools && ts-node binout.ts best-random uint32 0 | PractRand/RNG_test stdin32 -seed 0 -tf 2 -te 1 -multithreaded",
     "test:u53": "npm run build && cd tools && ts-node binout.ts best-random uint53 0 | PractRand/RNG_test stdin -seed 0 -tf 2 -te 1 -multithreaded",

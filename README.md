@@ -5,9 +5,9 @@ A humble replacement for `Math.random()` that is tiny, fast, seedable, and has g
 * Suitable for non-cryptographic applications
 * Passes most statistical tests
 * Period of ~2<sup>160</sup>
-* ~500 bytes
+* ~600 bytes
 * *Very* fast
-
+ 
 ## Installation
 ```
 npm i best-random --save
