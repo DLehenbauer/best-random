@@ -226,11 +226,15 @@ parseFile("rr-u64-64gb.log").then(async () => {
     await parseFile("rr-u64-512gb.log");
     await parseFile("rr-u64-8tb-home.log");
     
-    const current = await Promise.all([
+    await Promise.all([
         "mid-1", "mid-2", "pc-1", "pc-2", "slow-1", "slow-2"
     ].map((name) => parseFile(`rr-u64-4tb-${name}.log`)));
 
-    // showMap(current);
+    const current = await Promise.all([
+        "2-1", "2-2", "3-1", "3-2"
+    ].map((name) => parseFile(`rr-u64-16tb-${name}.log`)));
+
+    showMap(current);
     // showMapSkewed(p0, p1);
-    genScript("16TB", "u64-2.log");
+    // genScript("16TB", "u64-2.log");
 });
