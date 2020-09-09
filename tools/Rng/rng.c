@@ -1,4 +1,5 @@
 #include "rng.h"
+#include "params.h"
 #include "stdio.h"
 
 const uint32_t S = 0x9e3779b9;
@@ -8,8 +9,6 @@ static uint32_t y = 0;
 static uint32_t z = 0;
 static uint32_t w = 0;
 static uint32_t s = 0;
-static uint32_t r0 = 0;
-static uint32_t r1 = 0;
 
 static inline uint32_t rot(uint32_t v, uint32_t k) { k &= 31; return (v << k) | (v >> (32 - k)); }
 
@@ -48,11 +47,31 @@ uint64_t rng_u64() {
     return t | lo32();
 }
 
-void rng_init(uint32_t s0, uint32_t s1, uint32_t s2, uint32_t s3, uint32_t p0, uint32_t p1) {
+void rng_set(uint32_t s0, uint32_t s1, uint32_t s2, uint32_t s3) {
     x = s0;
     y = s1;
     z = s2;
     w = s3;
+}
+
+void rng_set_ext(uint32_t s0, uint32_t s1, uint32_t s2, uint32_t s3, uint32_t p0, uint32_t p1) {
+    rng_set(s0, s1, s2, s3);
     r0 = p0;
     r1 = p1;
+}
+
+void rng_get(uint32_t* pS0, uint32_t* pS1, uint32_t* pS2, uint32_t* pS3, uint32_t* pP0, uint32_t* pP1) {
+    *pS0 = x;
+    *pS1 = y;
+    *pS2 = z;
+    *pS3 = w;
+    *pP0 = r0;
+    *pP1 = r1;
+}
+
+void rng_expose(uint32_t** ppS0, uint32_t** ppS1, uint32_t** ppS2, uint32_t** ppS3) {
+    *ppS0 = &x;
+    *ppS1 = &y;
+    *ppS2 = &z;
+    *ppS3 = &w;
 }

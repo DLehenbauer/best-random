@@ -46,6 +46,10 @@ int main(int argc, char *argv[]) {
     FILE* fp = freopen(NULL, "wb", stdout);  // Only necessary on Windows, but harmless.
     assert(fp);
 
+    // Get the default values for p0/p1 from the RNG
+    uint32_t unused;
+    rng_get(&unused, &unused, &unused, &unused, &p0, &p1);
+
     for (int i = 1; i < argc;) {
         i = parseArg(argc, argv, i);
         if (i == 0) {
@@ -58,7 +62,7 @@ int main(int argc, char *argv[]) {
     }
 
     init_seed(0);
-    rng_init(seed(), seed(), seed(), seed(), p0, p1);
+    rng_set_ext(seed(), seed(), seed(), seed(), p0, p1);
 
     while (1) {
         uint64_t raw = rng_u64();
