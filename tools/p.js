@@ -188,10 +188,10 @@ function showMap(current, fn = colorFn) {
     }
 }
 
-function genScript(limit, logFile) {
-    console.log(`#!/bin/bash
+function genScript(tlmax, limit, config) {
+    const header = `#!/bin/bash
 
-logFile="rr-u64-${limit.toLowerCase()}-$(echo "\${0##*/}" | cut -f 1 -d '.').log"
+logFile="rr-u64-${tlmax.toLowerCase()}-$(echo "\${0##*/}" | cut -f 1 -d '.').log"
 clear
 echo ">>> Logging to: $logFile"
 
@@ -199,19 +199,71 @@ test () {
     p0=$1
     p1=$2
 
-    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax ${limit.toUpperCase()} 2>&1) | tee -a $logFile
+    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax ${tlmax.toUpperCase()} 2>&1) | tee -a $logFile
 }
 
 npm run make:rng
 echo
-`)
+`;
+
+    const max = Math.max(...config.map(_ => _.time));
+    const total = config.reduce((accumulator, _) => accumulator + (max / _.time), 0);
+
+    const jobParams = config.map(({ name, time, procs }) => ({
+        name,
+        procs,
+        ratio: (max / time) / total
+    }));
+
+    const tests = [];
+
     for (let p0 = 0; p0 < 32; p0++) {
         for (let p1 = 0; p1 < 32; p1++) {
             const row = getRow(p0, p1);
-            if (row.failures === 0 && row.length < 42) {
-                console.log(`test ${p0} ${p1}`);
+            if (row.failures === 0 && row.length < limit) {
+                tests.push({p0, p1});
             }
         }
+    }
+
+    const jobs = [];
+
+    let start = 0;
+    for (const { name, procs, ratio } of jobParams) {
+        const adjustedRatio = ratio / procs;
+        const testCount = Math.round(tests.length * adjustedRatio);
+        for (let batch = 1; batch <= procs; batch++) {            
+            jobs.push({
+                name: `${name}-${batch}`,
+                tests: tests.slice(start, start + testCount),
+                ratio,
+                adjustedRatio,
+            });
+
+            start += testCount;
+        }
+    }
+
+    // Sanity check that each test appears in exactly one job.
+    for (const test of tests) {
+        let found = 0;
+
+        for (const job of jobs) {
+            if (job.tests.indexOf(test) >= 0) {
+                found++;
+            }
+        }
+
+        assert.equal(found, 1);
+    }
+
+    for (const {name, tests, ratio, adjustedRatio} of jobs) {
+        console.log(`${name}.sh: ${tests.length} (${(adjustedRatio * 100).toFixed(1)}%)`)
+
+        fs.writeFileSync(`${name}.sh`, `${header}
+
+${tests.map(({p0, p1}) => `test ${p0} ${p1}`).join("\n")}
+`);
     }
 }
 
@@ -226,8 +278,12 @@ parseFile("rr-u64-64gb.log").then(async () => {
 
     const current = await Promise.all([
         "2-1", "2-2", "3-1", "3-2", "4-1", "4-2"
-    ].map((name) => parseFile(`rr-u64-16tb-${name}.log`)));
+    ].map((name) => parseFile(`rr-u64-4tb-${name}.log`)));
 
-    showMap(current);
-    // genScript("16tb", "u64-2.log");
+    // showMap(current);
+    genScript("4tb", /* limit: */ 42, [
+        { name: "2", time: 14810 + 14805, procs: 2 },
+        { name: "3", time: 16616 + 16615, procs: 2 },
+        { name: "4", time: 25184 + 27885, procs: 2 },
+    ]);
 });
