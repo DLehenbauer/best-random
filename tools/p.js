@@ -127,14 +127,14 @@ const colorFn = (row, isCurrent, length) => {
 }
 
 function showMap(current, fn = colorFn) {
-    let line = "  , ";
+    let line = "   ";
     for (let p0 = 0; p0 < 32; p0++) {
-        line += `${p0}`.padStart(2, " ") + ", ";
+        line += `${p0}`.padStart(2, " ") + " ";
     }
     console.log(line);
 
     for (let p0 = 0; p0 < 32; p0++) {
-        line = `${p0}`.padStart(2, " ") + ", ";
+        line = `${p0}`.padStart(2, " ") + " ";
         for (let p1 = 0; p1 < 32; p1++) {
             const row = getRow(p0, p1);
 
@@ -149,55 +149,17 @@ function showMap(current, fn = colorFn) {
                 }
             }
 
-            line += `${fn(row, isCurrent, length)}, `;
+            line += `${fn(row, isCurrent, length)} `;
         }
 
         console.log(line);
     }
-}
-
-function showMapSkewed(fn = colorFn) {
-    let line = "  , ";
-    for (let p0 = 0; p0 < 32; p0++) {
-        line += `${p0}`.padStart(2, " ") + ", ";
-    }
-    console.log(line);
-
-    for (let p0 = 0; p0 < 32; p0++) {
-        line = `${p0}`.padStart(2, " ") + ", ";
-        for (let p1 = p0; p1 < 32 + p0; p1++) {
-            const row = getRow(p0, p1 % 32);
-            line += `${fn(row)}, `;
-        }
-
-        console.log(line);
-    }
-}
-
-function showTable() {
-    const remaining = table
-        .filter((row) => row.failures + row.suspicious === 0)
-        .sort((left, right) => right.length - left.length)
-        .sort((left, right) => left.anomalies - right.anomalies);
-
-    console.table(remaining);
-    console.log(`${remaining.length}/${table.length} (${(remaining.length/table.length * 100).toFixed(1)}%) remaining`);
-
-    let deltas = [];
-    for (const row of remaining) {
-        const delta = row.delta + 32;               // +32 to avoid negative array indices
-        deltas[delta] = (deltas[delta] | 0) + 1;
-    }
-
-    deltas = deltas.map((count, index) => ({ delta: index - 32, count }));  // -32 to compensate for above.
-
-    console.table(deltas.sort((left, right) => right.count - left.count));
 }
 
 function genScript(limit, logFile) {
     console.log(`#!/bin/bash
 
-logFile="rr-u64-16tb-$(echo "\${0##*/}" | cut -f 1 -d '.').log"
+logFile="rr-u64-${limit.toLowerCase()}-$(echo "\${0##*/}" | cut -f 1 -d '.').log"
 clear
 echo ">>> Logging to: $logFile"
 
@@ -205,7 +167,7 @@ test () {
     p0=$1
     p1=$2
 
-    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax 16TB 2>&1) | tee -a $logFile
+    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax ${limit.toUpperCase()} 2>&1) | tee -a $logFile
 }
 
 npm run make:rng
@@ -214,7 +176,7 @@ echo
     for (let p0 = 0; p0 < 32; p0++) {
         for (let p1 = 0; p1 < 32; p1++) {
             const row = getRow(p0, p1);
-            if (row.failures === 0) {
+            if (row.failures === 0 && row.length < 42) {
                 console.log(`test ${p0} ${p1}`);
             }
         }
@@ -231,10 +193,9 @@ parseFile("rr-u64-64gb.log").then(async () => {
     ].map((name) => parseFile(`rr-u64-4tb-${name}.log`)));
 
     const current = await Promise.all([
-        "2-1", "2-2", "3-1", "3-2"
+        "2-1", "2-2", "3-1", "3-2", "4-1", "4-2"
     ].map((name) => parseFile(`rr-u64-16tb-${name}.log`)));
 
     showMap(current);
-    // showMapSkewed(p0, p1);
-    // genScript("16TB", "u64-2.log");
+    // genScript("16tb", "u64-2.log");
 });
