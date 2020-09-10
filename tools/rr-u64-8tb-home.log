@@ -770,6 +770,73 @@ length= 4 terabytes (2^42 bytes), time= 89517 seconds
   BCFN(0+2,13-0,T)                  R= +25.7  p =  2.9e-13    FAIL           
   ...and 2254 test result(s) without anomalies
 
+>>> p0=20, p1=8
+RNG_test using PractRand version 0.94
+RNG = RNG_stdin64, seed = 0
+test set = expanded, folding = extra
+
+rng=RNG_stdin64, seed=0
+length= 256 megabytes (2^28 bytes), time= 9.3 seconds
+  no anomalies in 1151 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 512 megabytes (2^29 bytes), time= 21.7 seconds
+  no anomalies in 1220 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 1 gigabyte (2^30 bytes), time= 41.3 seconds
+  no anomalies in 1292 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 2 gigabytes (2^31 bytes), time= 75.9 seconds
+  no anomalies in 1368 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 4 gigabytes (2^32 bytes), time= 143 seconds
+  no anomalies in 1449 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 8 gigabytes (2^33 bytes), time= 280 seconds
+  no anomalies in 1545 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 16 gigabytes (2^34 bytes), time= 548 seconds
+  no anomalies in 1640 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 32 gigabytes (2^35 bytes), time= 1054 seconds
+  no anomalies in 1715 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 64 gigabytes (2^36 bytes), time= 2129 seconds
+  no anomalies in 1808 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 128 gigabytes (2^37 bytes), time= 4236 seconds
+  Test Name                         Raw       Processed     Evaluation
+  [Low1/16]FPF-14+6/16:cross        R=  -2.6  p =1-1.1e-4   unusual          
+  ...and 1901 test result(s) without anomalies
+
+rng=RNG_stdin64, seed=0
+length= 256 gigabytes (2^38 bytes), time= 8258 seconds
+  no anomalies in 1983 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 512 gigabytes (2^39 bytes), time= 16818 seconds
+  no anomalies in 2058 test result(s)
+
+rng=RNG_stdin64, seed=0
+length= 1 terabyte (2^40 bytes), time= 33658 seconds
+  Test Name                         Raw       Processed     Evaluation
+  BCFN(0+2,13-0,T)                  R= +18.5  p =  2.0e-9   very suspicious  
+  ...and 2131 test result(s) without anomalies
+
+rng=RNG_stdin64, seed=0
+length= 2 terabytes (2^41 bytes), time= 67091 seconds
+  Test Name                         Raw       Processed     Evaluation
+  BCFN(0+2,13-0,T)                  R= +36.7  p =  3.8e-19    FAIL !         
+  ...and 2193 test result(s) without anomalies
+
 >>> p0=21, p1=2
 RNG_test using PractRand version 0.94
 RNG = RNG_stdin64, seed = 0

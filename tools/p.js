@@ -39,6 +39,10 @@ async function parseFile(filename) {
         let unusual = 0;
         let suspicious = 0;
         let failures = 0;
+        let lastAnomalous = false;
+        let lastUnusual = false;
+        let lastSuspicious = false;
+        let lastFailed = false;
 
         const paramExp = />>> p0=(\d+), p1=(\d+)$/;
         const lengthExp = /length= \d+ \w+ \(\d+\^(\d+) bytes\), time= [0-9.]+ seconds$/;
@@ -62,7 +66,11 @@ async function parseFile(filename) {
                     failures: Math.max(row.failures, failures),
                     suspicious: Math.max(row.suspicious, suspicious),
                     unusual: Math.max(row.unusual, unusual),
-                    anomalies: Math.max(row.anomalies, anomalies)
+                    anomalies: Math.max(row.anomalies, anomalies),
+                    lastAnomalous,
+                    lastUnusual,
+                    lastSuspicious,
+                    lastFailed,
                 };
             }
 
@@ -72,6 +80,10 @@ async function parseFile(filename) {
             unusual = 0;
             suspicious = 0;
             failures = 0;
+            lastAnomalous = false;
+            lastUnusual = false;
+            lastSuspicious = false;
+            lastFailed = false;
         }
 
         readInterface.on('line', function(line) {
@@ -94,13 +106,27 @@ async function parseFile(filename) {
                 const matches = line.match(lengthExp);
                 if (matches) {
                     length = parseInt(matches[1]);
+                    lastAnomalous = false;
+                    lastUnusual = false;
+                    lastSuspicious = false;
+                    lastFailed = false;        
                 }
             }
 
-            if (line.match(anomExp)) { anomalies++; }
-            if (line.match(unusExp)) { unusual++; }
-            if (line.match(suspExp)) { suspicious++; }
-            if (line.match(failExp)) { failures++; }
+            const isAnomalous = line.match(anomExp);
+            const isUnusual = line.match(unusExp);
+            const isSuspicious = line.match(suspExp);
+            const isFailed = line.match(failExp);
+
+            if (isAnomalous) { anomalies++; }
+            if (isUnusual) { unusual++; }
+            if (isSuspicious) { suspicious++; }
+            if (isFailed) { failures++; }
+
+            lastAnomalous = lastAnomalous || isAnomalous;
+            lastUnusual = lastUnusual || isUnusual;
+            lastSuspicious = lastSuspicious || isSuspicious;
+            lastFailed = lastFailed || isFailed;
 
             assert.equal(unusual + suspicious + failures, anomalies);
         });
@@ -108,22 +134,28 @@ async function parseFile(filename) {
         readInterface.on("close", () => {
             record();
             accept({ table, p0, p1, length: lastLength });
-        });        
+        });   
     });
 }
 
 const colorFn = (row, isCurrent, length) => {
     if (isCurrent) {
-        return chalk.bgGray(chalk.black(length));
+        return row.lastSuspicious
+            ? chalk.bgRed(chalk.black(length))
+            : row.lastAnomalous
+                ? chalk.bgYellow(chalk.black(length))
+                : chalk.bgGray(chalk.black(length));
     }
 
     return row.failures > 0
         ? chalk.gray("..")
-        : row.suspicious > 0
+        : row.lastSuspicious
             ? chalk.red(length)
-            : length < 42
+            : row.lastAnomalous
                 ? chalk.yellow(length)
-                : chalk.white(length);
+                : row.length < 42
+                    ? chalk.gray(length)
+                    : chalk.white(length);
 }
 
 function showMap(current, fn = colorFn) {
