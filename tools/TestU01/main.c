@@ -30,70 +30,87 @@ bool arg_hi = false;
 bool arg_lo = false;
 bool arg_rev = false;
 
-struct sorted_result_t
-{
-    char *name;
-    double delta;
-};
-
-static int sorted_result_cmp(const void *left, const void *right)
-{
-    const struct sorted_result_t *leftResult = left, *rightResult = right;
-
-    return leftResult->delta < rightResult->delta
-               ? 1
-               : leftResult->delta > rightResult->delta
-                     ? -1
-                     : 0;
-}
-
 uint32_t remainingIterations = 1;
+double testToTotalPVal[201] = {0};
+uint32_t testToTotalFailures[201] = {0};
 double totalIterationsRun = 0;
 double totalIterationsFailed = 0;
 double totalCasesRun = 0;
 double totalCasesUnusual = 0;
 double totalCasesSuspicious = 0;
 double totalCasesFailed = 0;
+
+double computeDelta(double pVal) {
+    return pVal < 0.5
+        ? pVal
+        : 1.0 - pVal;
+}
+
+double getDelta(uint32_t index) {
+    return computeDelta(bbattery_pVal[index]);
+}
+
+double getAvg(uint32_t index) {
+    return testToTotalPVal[index] / totalIterationsRun;
+}
+
+double getAvgDelta(uint32_t index) {
+    return computeDelta(getAvg(index));
+}
+
+struct sorted_result_t
+{
+    uint32_t index;
+};
+
+static int sorted_result_cmp_avg(const void *left, const void *right)
+{
+    const struct sorted_result_t *leftResult = left, *rightResult = right;
+
+    double leftAvg  = getAvgDelta(leftResult->index);
+    double rightAvg = getAvgDelta(rightResult->index);
+
+    return leftAvg < rightAvg
+               ? 1
+               : leftAvg > rightAvg
+                     ? -1
+                     : 0;
+}
+
+static int sorted_result_cmp_delta(const void *left, const void *right)
+{
+    const struct sorted_result_t *leftResult = left, *rightResult = right;
+
+    double leftDelta  = getDelta(leftResult->index);
+    double rightDelta = getDelta(rightResult->index);
+
+    return leftDelta < rightDelta
+               ? 1
+               : leftDelta > rightDelta
+                     ? -1
+                     : 0;
+}
+
 unif01_Gen *gen = NULL;
 
-bool run(char* name, void (*battery)(unif01_Gen *gen))
-{
-    totalIterationsRun++;
-
-    gen = createGenerator(arg_hi, arg_lo, arg_rev);
-
-    if (gen == NULL)
-    {
-        fprintf(stderr, "Error: Must specify high (-h) or low (-l)\n");
-        return 1;
-    }
-
-    battery(gen);
-    
-    struct sorted_result_t *results = malloc(bbattery_NTests * sizeof(struct sorted_result_t));
-    
-    for (int i = 0; i < bbattery_NTests; i++)
-    {
-        results[i].name = bbattery_TestNames[i];
-        results[i].delta = bbattery_pVal[i] < 0.5
-            ? bbattery_pVal[i]
-            : 1.0 - bbattery_pVal[i];
-    }
-
-    qsort(results, bbattery_NTests, sizeof *results, sorted_result_cmp);
-
-    int numFailed = 0;
+void displayResults(char* name, struct sorted_result_t* results, bool all) {
+    int numFailed     = 0;
     int numSuspicious = 0;
-    int numUnusual = 0;
+    int numUnusual    = 0;
+
+    bool printHeader = true;
 
     for (int i = 0; i < bbattery_NTests; i++)
     {
-        bool testFailed = results[i].delta < gofw_Suspectp;
-        bool testSuspicious = !testFailed && results[i].delta < 0.0025;
-        bool testUnusual    = !testSuspicious && results[i].delta < 0.01;
+        uint32_t index = results[i].index;
+        double delta = getDelta(index);
+        bool testFailed     = delta < gofw_Suspectp;
+        bool testSuspicious = !testFailed && delta < 0.0025;
+        bool testUnusual    = !testSuspicious && delta < 0.01;
 
         if (testFailed)
         {
+            testToTotalFailures[index]++;
             numFailed++;
         }
         else if (testSuspicious)
@@ -104,14 +121,21 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
         {
             numUnusual++;
         }
-        else if (!swrite_Basic)
+        else if (!swrite_Basic && !all)
         {
             continue;
         }
 
-        printf("     %-30s %f%s\n",
-            results[i].name,
-            results[i].delta,
+        if (printHeader) {
+            printf("    avg p     fail  test                           p\n");
+            printHeader = false;
+        }
+
+        printf("    %f  %4d  %-30s %f%-15s\n",
+            getAvgDelta(index),
+            testToTotalFailures[index],
+            bbattery_TestNames[index],
+            delta,
             testFailed
                 ? "    FAIL!"
                 : testSuspicious
@@ -144,11 +168,42 @@ bool run(char* name, void (*battery)(unif01_Gen *gen))
         (totalCasesFailed / totalCasesRun) * 100,
         (totalCasesSuspicious / totalCasesRun) * 100,
         (totalCasesUnusual / totalCasesRun) * 100);
+}
+
+int run(char* name, void (*battery)(unif01_Gen *gen))
+{
+    totalIterationsRun++;
+
+    gen = createGenerator(arg_hi, arg_lo, arg_rev);
+
+    if (gen == NULL)
+    {
+        fprintf(stderr, "Error: Must specify high (-h) or low (-l)\n");
+        return 1;
+    }
+
+    battery(gen);
+    
+    struct sorted_result_t* results = malloc(bbattery_NTests * sizeof(struct sorted_result_t));
+    
+    for (int i = 0; i < bbattery_NTests; i++)
+    {
+        results[i].index = i;
+        testToTotalPVal[i] += bbattery_pVal[i];
+    }
+
+    qsort(results, bbattery_NTests, sizeof *results, sorted_result_cmp_delta);
+    displayResults(name, results, /* all: */ false);
+
+    // If this is the last iteration resort the results by avg-p and display all tests.
+    if (remainingIterations == 1) {
+        qsort(results, bbattery_NTests, sizeof *results, sorted_result_cmp_avg);
+        displayResults(name, results, /* all: */ true);
+    }
 
     free(results);    
     unif01_DeleteExternGenBits(gen);
-
-    return numFailed == 0;
+    return 0;
 }
 
 int main(int argc, char *argv[])
