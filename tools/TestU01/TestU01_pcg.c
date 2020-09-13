@@ -19,7 +19,7 @@ unif01_Gen *createGenerator(bool high32, bool low32, bool reversed)
 
     printf("\nNext seed: %016lx %016lx\n", x, y);
 
-    pcg32_srandom_r(&rng, seed(), seed());
+    pcg32_srandom_r(&rng, x, y);
 
     return reversed
         ? unif01_CreateExternGenBits("PCG32 (reversed)", gen32_rev)
