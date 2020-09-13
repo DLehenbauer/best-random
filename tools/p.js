@@ -144,7 +144,7 @@ const colorFn = (row, isCurrent, length) => {
             ? chalk.bgRed(chalk.black(length))
             : row.lastAnomalous
                 ? chalk.bgYellow(chalk.black(length))
-                : chalk.bgGray(chalk.black(length));
+                : chalk.bgWhite(chalk.black(length));
     }
 
     return row.failures > 0
@@ -267,6 +267,18 @@ ${tests.map(({p0, p1}) => `test ${p0} ${p1}`).join("\n")}
     }
 }
 
+function genCsv(limit) {
+    console.log(`S?,p0,p1,H,HR,L,LR`)
+    for (let p0 = 0; p0 < 32; p0++) {
+        for (let p1 = 0; p1 < 32; p1++) {
+            const row = getRow(p0, p1);
+            if (row.failures === 0 && row.length >= limit) {
+                console.log(`${row.lastSuspicious ? '*' : ''},${p0},${p1},,,,`)
+            }
+        }
+    }
+}
+
 console.clear();
 parseFile("rr-u64-64gb.log").then(async () => {
     await parseFile("rr-u64-512gb.log");
@@ -280,10 +292,11 @@ parseFile("rr-u64-64gb.log").then(async () => {
         "2-1", "2-2", "3-1", "3-2", "4-1", "4-2"
     ].map((name) => parseFile(`rr-u64-4tb-${name}.log`)));
 
-    // showMap(current);
-    genScript("4tb", /* limit: */ 42, [
-        { name: "2", time: 14810 + 14805, procs: 2 },
-        { name: "3", time: 16616 + 16615, procs: 2 },
-        { name: "4", time: 25184 + 27885, procs: 2 },
-    ]);
+    showMap(current);
+    // genScript("4tb", /* limit: */ 42, [
+    //     { name: "2", time: 14810 + 14805, procs: 2 },
+    //     { name: "3", time: 16616 + 16615, procs: 2 },
+    //     { name: "4", time: 25184 + 27885, procs: 2 },
+    // ]);
+    // genCsv(42);
 });
