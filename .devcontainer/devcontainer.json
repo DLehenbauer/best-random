@@ -20,14 +20,7 @@
 	"extensions": [
 		"ms-azuretools.vscode-docker",
 		"ms-vscode.cpptools"
-	]
+	],
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "yarn install",
-
-	// Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
-	// "remoteUser": "node"
+	"postCreateCommand": "cd tools/PractRand && make fetchSrc && cd ../TestU01 && make fetchSrc"
 }

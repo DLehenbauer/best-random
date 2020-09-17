@@ -1,18 +1,16 @@
 # Exclude everything by default
 /*
 
-# Explicitly include config files
+# Include config files
 !/*.json
 !/*.js
 
-# Explicitly include src
+# Include src
 !/src
 !/test
 
-# Explicitly include tools
+# Include tools, but exclude compiled artifacts
 !/tools
-
-# ...but exclude compiled tools
 /tools/Rng/rng
 /tools/PractRand/RNG_test
 /tools/PractRand/src
@@ -24,3 +22,6 @@
 /tools/TestU01/lib
 /tools/TestU01/share
 /tools/TestU01/src
+
+# Include .bashrc
+!/.devcontainer/.bashrc

@@ -19,6 +19,9 @@ RUN apt-get autoremove -y && apt-get clean -y
 
 WORKDIR /usr/src/best-random
 
+# Install our custom .bashrc for colorized prompt and 'ls'
+COPY ./.devcontainer/.bashrc /root
+
 # Download and build PractRand and TestU01
 COPY ./tools/PractRand ./tools/PractRand
 RUN cd tools/PractRand && make fetchSrc

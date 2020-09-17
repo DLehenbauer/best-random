@@ -139,23 +139,29 @@ async function parseFile(filename) {
 }
 
 const colorFn = (row, isCurrent, length) => {
+    const str = length > 0
+        ? `${length}`
+        : "??"
+
     if (isCurrent) {
         return row.lastSuspicious
-            ? chalk.bgRed(chalk.black(length))
+            ? chalk.bgRed(chalk.black(str))
             : row.lastAnomalous
-                ? chalk.bgYellow(chalk.black(length))
-                : chalk.bgWhite(chalk.black(length));
+                ? chalk.bgYellow(chalk.black(str))
+                : chalk.bgWhite(chalk.black(str));
     }
+
+    assert.equal(length, row.length);
 
     return row.failures > 0
         ? chalk.gray("..")
         : row.lastSuspicious
-            ? chalk.red(length)
+            ? chalk.red(str)
             : row.lastAnomalous
-                ? chalk.yellow(length)
+                ? chalk.yellow(str)
                 : row.length < 42
-                    ? chalk.gray(length)
-                    : chalk.white(length);
+                    ? chalk.gray(str)
+                    : chalk.white(str);
 }
 
 function showMap(current, fn = colorFn) {
