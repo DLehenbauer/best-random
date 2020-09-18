@@ -288,6 +288,17 @@ function genCsv(limit) {
                 console.log(`${row.lastSuspicious ? '*' : ''},${p0},${p1},,,,`)
             }
         }
+
+        assert.equal(found, 1);
+    }
+
+    for (const {name, tests, ratio, adjustedRatio} of jobs) {
+        console.log(`${name}.sh: ${tests.length} (${(adjustedRatio * 100).toFixed(1)}%)`)
+
+        fs.writeFileSync(`${name}.sh`, `${header}
+
+${tests.map(({p0, p1}) => `test ${p0} ${p1}`).join("\n")}
+`);
     }
 }
 
