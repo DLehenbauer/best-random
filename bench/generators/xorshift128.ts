@@ -1,10 +1,10 @@
 import { RandomCtor, Random } from "../../dist";
 
 export const Xorshift128: RandomCtor =
-    function(...seed: number[]): Random {
+    function (...seed: number[]): Random {
         seed = seed.length
             ? seed
-            : [...new Array(4)].map(() => Math.random() * 0x100000000)
+            : [...new Array(4)].map(() => (Math.random() * 0x100000000) | 0);
         seed.length = 4;
 
         // Scramble the initial state using a Borosh-Niederreiter generator.

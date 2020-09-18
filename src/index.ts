@@ -51,17 +51,19 @@ export const Random: RandomCtor =
             : [...new Array(4)].map(() => Math.random() * 0x100000000);
 
         const s = {
-            x: seed[0] | 0, y: seed[1] | 0, z: seed[2] | 0, w: seed[3] | 0, c: 0
-        };
+            x: seed[0] | 0,
+            y: seed[1] | 0,
+            z: seed[2] | 0,
+            w: seed[3] | 0,
+            c: 0,
+        }
 
-        const mix = (a: number, b: number) => {
+        const mix = (a: number) => {
             const rot = (v: number, k: number) => (v << k) | (v >>> (32 - k));
 
-            a += rot(Math.imul(b, 16777619), b);
-            a ^= a >>> ((b >>> 30) + 14);
-            return (a + b) >>> 0;
+            return (rot(a, 9) - rot(s.z, 4)) >>> 0;
         }
-        
+
         const uint32 = () => {
             let t = s.x;
             s.x = s.y;
@@ -75,17 +77,17 @@ export const Random: RandomCtor =
             t ^= s.w << 11;    // w (lo 21b)  43210fed cba98765 43210... ........           
 
             s.w = t;
-            
-            return mix(s.x, s.z - s.c);
+
+            return mix(s.x - s.c);
         }
 
         for (let i = 0; i < 9 || !s.w; i++) {
-            s.w = uint32();
+            s.w = uint32() | 0;
         }
 
-        const uint32lo = () => mix(s.w, s.c - s.y);
+        const uint32lo = () => mix(s.c - s.w);
         const uint53 = () => uint32() * 0x200000 + (uint32lo() >>> 11);
-        
+
         return {
             uint32,
             uint53,
