@@ -243,7 +243,7 @@ echo
     let start = 0;
     for (const { name, procs, ratio } of jobParams) {
         const adjustedRatio = ratio / procs;
-        const testCount = Math.round(tests.length * adjustedRatio);
+        const testCount = Math.ceil(tests.length * adjustedRatio);
         for (let batch = 1; batch <= procs; batch++) {            
             jobs.push({
                 name: `${name}-${batch}`,
@@ -266,7 +266,7 @@ echo
             }
         }
 
-        assert.equal(found, 1);
+        assert.equal(found, 1, `All tests must be included exactly once, but found ${JSON.stringify(test)} ${found} times.`);
     }
 
     for (const {name, tests, ratio, adjustedRatio} of jobs) {
