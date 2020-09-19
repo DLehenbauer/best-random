@@ -53,7 +53,7 @@ async function parseFile(filename) {
 
         function record() {
             assert.equal(unusual + suspicious + failures, anomalies);
-            assert(length >= 0);
+            // assert(length >= 0);
 
             if (p0 >= 0) {
                 const i = toIndex(p0, p1);
@@ -302,24 +302,31 @@ ${tests.map(({p0, p1}) => `test ${p0} ${p1}`).join("\n")}
     }
 }
 
-console.clear();
-parseFile("rr-u64-64gb.log").then(async () => {
-    await parseFile("rr-u64-512gb.log");
-    await parseFile("rr-u64-8tb-home.log");
-    
-    await Promise.all([
-        "mid-1", "mid-2", "pc-1", "pc-2", "slow-1", "slow-2"
-    ].map((name) => parseFile(`rr-u64-4tb-${name}.log`)));
+const oldLogs = [
+    "rr-u64-64gb.log",
+    "rr-u64-512gb.log",
+    "rr-u64-8tb-home.log",
+].concat([
+    "mid-1", "mid-2", "pc-1", "pc-2", "slow-1", "slow-2"
+].map((name) => `rr-u64-4tb-${name}.log`));
 
-    const current = await Promise.all([
-        "2-1", "2-2", "3-1", "3-2", "4-1", "4-2"
-    ].map((name) => parseFile(`rr-u64-4tb-${name}.log`)));
+const currentLogs = [
+    "2-1", "2-2", "3-1", "3-2", "4-1", "4-2"
+].map((name) => `rr-u64-4tb-${name}.log`);
 
-    showMap(current);
-    // genScript("4tb", /* limit: */ 42, [
-    //     { name: "2", time: 14810 + 14805, procs: 2 },
-    //     { name: "3", time: 16616 + 16615, procs: 2 },
-    //     { name: "4", time: 25184 + 27885, procs: 2 },
-    // ]);
-    // genCsv(42);
+const display = async () => {
+    console.clear();
+    showMap(await Promise.all(currentLogs.map(log => parseFile(log))));
+}
+
+Promise.all(oldLogs.map(log => parseFile(log))).then(() => {
+    display();
+    setInterval(display, 60 * 1000);
 });
+
+// genScript("4tb", /* limit: */ 42, [
+//     { name: "2", time: 14810 + 14805, procs: 2 },
+//     { name: "3", time: 16616 + 16615, procs: 2 },
+//     { name: "4", time: 25184 + 27885, procs: 2 },
+// ]);
+// genCsv(42);
