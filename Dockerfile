@@ -24,10 +24,10 @@ COPY ./.devcontainer/.bashrc /root
 
 # Download and build PractRand and TestU01
 COPY ./tools/PractRand ./tools/PractRand
-RUN cd tools/PractRand && make fetchSrc
+RUN cd tools/PractRand && make fetchSrc base
 
 COPY ./tools/TestU01 ./tools/TestU01
-RUN cd tools/TestU01 && make fetchSrc
+RUN cd tools/TestU01 && make fetchSrc base
 
 # Cache NPM modules by copying just 'package.json' and 'package-lock.json' performing the 'npm ci'.
 COPY package*.json ./

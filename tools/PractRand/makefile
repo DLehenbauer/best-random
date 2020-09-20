@@ -1,11 +1,13 @@
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 all:
+	make base rng
+
+base:
 	cd src/PractRand && \
 	g++ -std=c++14 -c src/*.cpp src/RNGs/*.cpp src/RNGs/other/*.cpp -O3 -fomit-frame-pointer -march=native -mtune=native -Iinclude -pthread && \
 	ar rcs libPractRand.a *.o && \
 	rm *.o
-	make rng
 
 rng:
 	cd src/PractRand && \
