@@ -7,6 +7,7 @@
   "sideEffects": "false",
   "scripts": {
     "bench": "npm run build && cd bench && ts-node index.ts",
+    "bench:opt": "npm run build && cd bench && node -r ts-node/register --always-opt index.ts",
     "build": "gulp",
     "clean": "git clean -Xfd -e tools/RNG_Test.exe",
     "prepublishOnly": "git reset --hard head && git clean -xfd && npm i && npm run build && npm t",
