@@ -1,7 +1,7 @@
 import { Random, RandomCtor } from "../../dist";
 
 export const Jsf32: RandomCtor =
-    function(...seed: number[]): Random {
+    function (...seed: number[]): Random {
         // Note: there are six known fixed points.  We avoid these by ensuring that seed `a` is 0xf1ea5eed.
         //
         // { 0x00000000, 0x00000000, 0x00000000, 0x00000000 }

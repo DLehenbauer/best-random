@@ -4,7 +4,7 @@ export const Xoshiro128ss: RandomCtor =
     function (...seed: number[]): Random {
         seed = seed.length
             ? seed
-            : [...new Array(4)].map(() => Math.random() * 0x100000000)
+            : [...new Array(4)].map(() => (Math.random() * 0x100000000) | 0);
         seed.length = 4;
 
         // Avoid fixed points at 0 by scrambling the initial state using a Borosh-Niederreiter generator.

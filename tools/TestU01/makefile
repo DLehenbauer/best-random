@@ -1,7 +1,7 @@
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 all:
-	make testu01 rng stdin
+	make base rng stdin
 
 fetchSrc:
 	mkdir -p src
@@ -18,7 +18,7 @@ rng:
 pcg:
 	gcc -std=c99 -Wall -O3 -fomit-frame-pointer -march=native -mtune=native -o TestU01_rng TestU01_pcg.c main.c generators/pcg_basic.c -Iinclude -Llib -ltestu01 -lprobdist -lmylib -lm
 
-testu01:
+base:
 	cd src/TestU01-1.2.3 && \
 	./configure --prefix="$(ROOT_DIR)" && \
 	make -j 6 && \

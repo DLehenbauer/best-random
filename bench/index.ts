@@ -1,7 +1,9 @@
 import { run } from "hotloop";
 import { generators } from "./generators";
 
-const rngs = [...generators.keys()];
+const rngs = [...generators.keys()]
+    .filter(name => ["best-random", "xsadd"].includes(name))
+    ;
 
 (async () => {
     for (const mode of ["uint32", "float64"]) {
