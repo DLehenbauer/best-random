@@ -321,7 +321,7 @@ const display = async () => {
 
 Promise.all(oldLogs.map(log => parseFile(log))).then(() => {
     display();
-    setInterval(display, 60 * 1000);
+    // setInterval(display, 60 * 1000);
 });
 
 // genScript("4tb", /* limit: */ 42, [

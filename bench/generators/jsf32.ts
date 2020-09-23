@@ -13,7 +13,7 @@ export const Jsf32: RandomCtor =
 
         const s = {
             a: 0xf1ea5eed | 0,
-            b: seed[0] | 0,
+            b: seed[0] | 0,         // Note: (b, c, d) are all initialized with the same 32b int.
             c: seed[0] | 0,
             d: seed[0] | 0,
         };
