@@ -1,5 +1,7 @@
 import { Random } from "../..";     // Use minified version of 'Random'
 import { PCG32 } from "./pcg32";
+import { RomuQuad32 } from "./romuquad32";
+import { RomuTrio32 } from "./romutrio32";
 import { XSadd } from "./xsadd";
 import { Xorshift32 } from "./xorshift32";
 import { Xorshift128 } from "./xorshift128";
@@ -9,11 +11,13 @@ import seedrandom = require("seedrandom");
 
 const best = new Random(0x4c24820d, 0x84930822, 0xc1290042, 0x09008200);
 const xsadd = new XSadd(0);
+const jsf32 = new Jsf32(0);
+const pcg32 = new PCG32(0, 0);
+const romuQuad32 = new RomuQuad32(0);
+const romuTrio32 = new RomuTrio32(0);
 const xorshift32 = new Xorshift32(0);
 const xorshift128 = new Xorshift128(0);
-const jsf32 = new Jsf32(0);
 const xoshiro128ss = new Xoshiro128ss(0);
-const pcg32 = new PCG32(0, 0);
 
 const r1: [string, Partial<Random>][] = [
     [ "best-random", best ],
@@ -21,6 +25,8 @@ const r1: [string, Partial<Random>][] = [
     [ "jsf32", jsf32 ],
     [ "xorshift32", xorshift32 ],
     [ "xorshift128", xorshift128 ],
+    [ "romutrio32", romuTrio32 ],
+    [ "romuquad32", romuQuad32 ],
     [ "xoshiro128ss", xoshiro128ss ],
     [ "PCG32 (wasm)", pcg32],
     [ "Math.random", {
