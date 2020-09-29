@@ -209,9 +209,9 @@ test () {
     # echo "static uint32_t r1 = $p1;" >> ./Rng/params.h
 
     # npm run make:practrand:rng
-    # (echo ">>> p0=$p0, p1=$p1" && stdbuf -oL -eL ./PractRand/RNG_test best -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax ${tlmax.toUpperCase()} 2>&1) | tee -a $logFile
+    # (echo ">>> p0=$p0, p1=$p1" && stdbuf -oL -eL ./PractRand/RNG_test best -te 1 -multithreaded -tlmin 64MB 2>&1) | tee -a $logFile
 
-    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 64MB -tlmax ${tlmax.toUpperCase()} 2>&1) | tee -a $logFile
+    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -te 1 -multithreaded -tlmin 64MB 2>&1) | tee -a $logFile
 }
 
 npm run make:rng
