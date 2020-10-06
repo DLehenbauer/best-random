@@ -13,7 +13,7 @@ RUN mkdir /tmp/library-scripts \
     && /bin/bash /tmp/library-scripts/docker-debian.sh "${ENABLE_NONROOT_DOCKER}" "${SOURCE_SOCKET}" "${TARGET_SOCKET}" "${USERNAME}" \
     && rm -rf /tmp/library-scripts/
 
-# Clean up
+# Clean up apt artifacts
 RUN apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*

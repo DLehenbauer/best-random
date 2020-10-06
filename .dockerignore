@@ -6,6 +6,7 @@
 !/*.js
 
 # Include src
+!/bench
 !/src
 !/test
 
