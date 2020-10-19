@@ -209,9 +209,9 @@ test () {
     # echo "static uint32_t r1 = $p1;" >> ./Rng/params.h
 
     # npm run make:practrand:rng
-    # (echo ">>> p0=$p0, p1=$p1" && stdbuf -oL -eL ./PractRand/RNG_test best -tf 2 -te 1 -multithreaded -tlmin 256MB -tlmax ${tlmax.toUpperCase()} 2>&1) | tee -a $logFile
+    # (echo ">>> p0=$p0, p1=$p1" && stdbuf -oL -eL ./PractRand/RNG_test best -te 1 -multithreaded -tlmin 64MB 2>&1) | tee -a $logFile
 
-    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -tf 2 -te 1 -multithreaded -tlmin 64MB -tlmax ${tlmax.toUpperCase()} 2>&1) | tee -a $logFile
+    (echo ">>> p0=$p0, p1=$p1" && ./Rng/rng -p0 $p0 -p1 $p1 | stdbuf -oL -eL ./PractRand/RNG_test stdin64 -seed 0 -te 1 -multithreaded -tlmin 64MB 2>&1) | tee -a $logFile
 }
 
 npm run make:rng
@@ -243,7 +243,7 @@ echo
     let start = 0;
     for (const { name, procs, ratio } of jobParams) {
         const adjustedRatio = ratio / procs;
-        const testCount = Math.round(tests.length * adjustedRatio);
+        const testCount = Math.ceil(tests.length * adjustedRatio);
         for (let batch = 1; batch <= procs; batch++) {            
             jobs.push({
                 name: `${name}-${batch}`,
@@ -266,7 +266,7 @@ echo
             }
         }
 
-        assert.equal(found, 1);
+        assert.equal(found, 1, `All tests must be included exactly once, but found ${JSON.stringify(test)} ${found} times.`);
     }
 
     for (const {name, tests, ratio, adjustedRatio} of jobs) {
