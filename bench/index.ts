@@ -2,7 +2,7 @@ import { run } from "hotloop";
 import { generators } from "./generators";
 
 const rngs = [...generators.keys()]
-    .filter(name => ["best-random", "xsadd"].includes(name))
+    // .filter(name => ["best-random", "xsadd"].includes(name))
     ;
 
 (async () => {
