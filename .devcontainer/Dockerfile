@@ -4,7 +4,7 @@ ARG USERNAME="node"
 FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-${VARIANT}
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends tmux
+    && apt-get -y install --no-install-recommends tmux parallel
 
 # Install Docker CLI / Docker-Compose and create 'docker-init.sh' to proxy docker socket.
 # (We retrieve the install script from the 'docker-from-docker' dev container template)
