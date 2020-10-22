@@ -5,7 +5,6 @@ export const Xorshift128: RandomCtor =
         seed = seed.length
             ? seed
             : [...new Array(4)].map(() => (Math.random() * 0x100000000) | 0);
-        seed.length = 4;
 
         // Scramble the initial state using a Borosh-Niederreiter generator.
         for (let i = 1; (i < 8) || (seed[0] | seed[1] | seed[2] | seed[3]) === 0; i++) {
@@ -32,8 +31,8 @@ export const Xorshift128: RandomCtor =
             return s.w >>> 0;
         }
 
-        // Note: XorShift is known to produce weak lower bits.  To help compensate, we discard the low
-        //       bits of both 32b samples when constructing a 53b value.
+        // Note: XorShift is known to produce weak lower bits.  To help compensate, we discard
+        //       the low bits of both 32b samples when constructing a 53b value.
         const uint53 = () => ((uint32() >>> 6) * 0x8000000) + (uint32() >>> 5);
 
         return {
