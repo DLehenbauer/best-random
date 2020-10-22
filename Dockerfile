@@ -30,8 +30,9 @@ COPY ./tools/TestU01 ./tools/TestU01
 RUN cd tools/TestU01 && make fetchSrc base
 
 # Cache NPM modules by copying just 'package.json' and 'package-lock.json' performing the 'npm ci'.
-COPY package*.json ./
-RUN npm ci
+COPY ./package*.json ./
+COPY ./bench/package*.json ./bench/
+RUN npm install
 
 # Copy remaining source
 COPY ./*.json ./

@@ -22,5 +22,5 @@
 		"ms-vscode.cpptools"
 	],
 
-	"postCreateCommand": "cd tools/PractRand && make fetchSrc && cd ../TestU01 && make fetchSrc"
+	"postCreateCommand": "npm install && npm run install:tools"
 }
