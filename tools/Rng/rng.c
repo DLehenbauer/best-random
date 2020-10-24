@@ -2,7 +2,7 @@
 #include "params.h"
 #include "stdio.h"
 
-const uint32_t S = 0x9e3779b9;
+const uint32_t S = 0x9e3779b9;  // Fractional part of golden ratio * 2^32 (i.e. `floor((φ % 1) * 2^32)`)
 
 static uint32_t x = 0;
 static uint32_t y = 0;
