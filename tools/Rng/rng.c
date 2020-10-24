@@ -2,7 +2,8 @@
 #include "params.h"
 #include "stdio.h"
 
-const uint32_t S = 0x9e3779b9;  // Fractional part of golden ratio * 2^32 (i.e. `floor((φ % 1) * 2^32)`)
+// Fractional part of golden ratio * 2^32 (i.e. `floor((φ % 1) * 2^32)`)
+const uint32_t S = 0x9e3779b9;
 
 static uint32_t x = 0;
 static uint32_t y = 0;
@@ -10,6 +11,7 @@ static uint32_t z = 0;
 static uint32_t w = 0;
 static uint32_t s = 0;
 
+// Modern GCC/CLang reduce this to a single 'rol' instruction on x86/x64.
 static inline uint32_t rot(uint32_t v, uint32_t k) { k &= 31; return (v << k) | (v >> (32 - k)); }
 
 void advance() {
