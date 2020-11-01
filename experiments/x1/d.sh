@@ -5,4 +5,4 @@ update () {
 }
 
 # Update the display once every 'n' seconds
-while true; do update && sleep 10; done;
+while true; do update; sleep 10; done;

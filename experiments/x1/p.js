@@ -1,6 +1,7 @@
 const assert = require("assert").strict;
 const fs = require('fs');
 
+const configExp = /^\*{5} MCP version ([^ ]+) --([^ ]+) \*{5}$/gm;
 const testExp = /^============\n([^)]+) \(\d+ bytes\)\n=======[\s\S]*?^one sided P value \(very small numbers are bad\)\nP = ([^\n]+)$/gm;
 const overallExp = /^====================\ncompleted (\d+) tests\n(\d+) out of (\d+) tests ok\.\n([\s\S]*)\n\nOverall summary one sided P-value \(smaller numbers bad\)\nP = ([^ ]+) : (.*)+$/gm;
 const failuresExp = /^(\d+) grade (\d+) failures \((.*)\).$/gm;
@@ -28,6 +29,11 @@ async function parseFile(filename) {
         }
 
         const result = {};
+
+        match(configExp, ($) => {
+            result.version = $[1];
+            result.size = $[2];
+        });
 
         matchAll(testExp, ($) => {
             result.tests = $.map(([, name, p]) => ({ name, p: parseFloat(p) }));
@@ -58,7 +64,7 @@ async function parseFile(filename) {
             assert(result.worst.name.startsWith($[1]));
         });
 
-        for (const property of ["tests", "worst", "completed", "passed", "p", "evaluation"]) {
+        for (const property of ["version", "size", "tests", "worst", "completed", "passed", "p", "evaluation"]) {
             assert.notEqual(result[property], undefined, `Require property '${property}' missing from '${filename}'.`);
         }
 
