@@ -39,6 +39,7 @@
     "gjrand:huge": "npm run gjrand -- --huge",
     "gjrand:tera": "npm run gjrand -- --tera",
     "gjrand:ten-tera": "npm run gjrand -- --ten-tera",
+    "mod3": "npm run make:rng:rng && cd tools/GJRand/src/gjrand.4.3.0.0/testunif/bin && ../../../../../Rng/rng | ./mod3 --progress",
     "practrand": "npm run make:practrand:rng && npm run practrand:u64",
     "practrand:u64": "cd ./tools/PractRand && ./RNG_test best -tf 2 -te 1 -multithreaded",
     "practrand:u32h": "cd tools/Rng && ./rng -h | ../PractRand/RNG_test stdin32 -seed 0 -tf 2 -te 1 -multithreaded",
