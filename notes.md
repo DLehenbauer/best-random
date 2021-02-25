@@ -17,6 +17,21 @@
 | 0x01c8e815 = 29943829   = (19)(1575991)   | 0.67429  | 0.67105∗ | 0.58062  |
 | 0x01ed0675 = 32310901   = (7)(29)(159167) | 0.65630  | 0.65336  | 0.65336∗ |
 
+### [A 32-bit linear congruential random number generator with prime modulus](https://www.researchgate.net/profile/Partha-Bhowmick-3/publication/236864683_Cubic_approximation_of_curve-shaped_objects_in_Z2_A_generalized_approach_based_on_discrete_curvature/links/02e7e53b140a08d1ea000000/Cubic-approximation-of-curve-shaped-objects-in-Z2-A-generalized-approach-based-on-discrete-curvature.pdf#page=74)
+
+| M | R | T | a | S(M, R, T) |
+|-|-|-|-|-|
+| LP | 5 | 8 | 2095029433 | 0.778599 |
+| SG | 3 | 8 | 1711583859 | 0.774112 |
+| LP | 1 | 8 | 1031857201 | 0.771506 |
+| SG | 5 | 8 |  641822286 | 0.770333 |
+| SG | 5 | 8 | 1806936496 | 0.770068 |
+| SG | 1 | 8 |  233254402 | 0.769598 |
+| SG | 3 | 8 | 1450482080 | 0.769598 |
+| TW | 3 | 8 | 1560939364 | 0.769598 |
+| LP | 2 | 8 |  567833125 | 0.769188 |
+| LP | 3 | 8 | 1262323969 | 0.769184 |
+
 # Multipliers for MCGs with m=2<sup>32</sup>
 
 ### [Computationally Easy, Spectrally Good Multipliers for Congruential Pseudorandom Number Generators](https://labs.oracle.com/pls/apex/f?p=LABS:0:0:APPLICATION_PROCESS=GETDOC_INLINE:::DOC_ID:1360)
@@ -39,17 +54,44 @@
 Notes:
 * a<sup>*</sup> produces the same sequence as a, but in reverse order.
 
+### [Multiplicative Congruential Random Number Generators With Modulus 2ß : An Exhaustive Analysis For ß = 32 and a Partial Analysis For ß = 48](https://www.ams.org/journals/mcom/1990-54-189/S0025-5718-1990-0993929-9/S0025-5718-1990-0993929-9.pdf)
+
+| Multiplier A = 5^j (mod 2^32) | Exponent j | ? |2 | 3 | 4 | 5 | 6 |
+|-|-|-|-|-|-|-|-|
+|  1099087573 |   9649599 | S1 | .8920 | .8563 | .8604 | .8420 | .8325 |
+|  4028795517 |  93795525 | S2 | .8954 | .7637 | .6215 | .6657 | .6576 |
+|             |           | S3 | .8920 | .8401 | .8269 | .7460 | .8547 |
+|  2396548189 | 126371437 | S1 | .8571 | .9238 | .8316 | .8248 | .8248 |
+|  3203713013 | 245509143 | S2 | .7957 | .7271 | .7862 | .6897 | .6576 |
+|             |           | S3 | .8571 | .9122 | .8377 | .8174 | .8385 |
+|  2824527309 |   6634497 | S1 | .9220 | .8235 | .8501 | .8451 | .8332 |
+|  1732073221 |  96810627 | S2 | .8290 | .8325 | .7113 | .5458 | .6576 |
+|             |           | S3 | .9220 | .7661 | .7910 | .7707 | .7972 |
+|  3934873077 | 181002903 | S1 | .8675 | .8287 | .8278 | .8361 | .8212 |
+|  1749966429 | 190877677 | S2 | .8744 | .7153 | .8012 | .7617 | .6367 |
+|             |           | S3 | .8675 | .7825 | .7393 | .7531 | .7329 |
+|   392314069 | 160181311 | S1 | .9095 | .8292 | .8536 | .8489 | .8198 |
+| 12304580733 | 211699269 | S2 | .9691 | .7207 | .7662 | .6537 | .6159 |
+|             |           | S3 | .9095 | .8061 | .7869 | .7932 | .7923 |
+|       69069 |           | S1 | .4625 | .3131 | .4572 | .5529 | .3767 |
+|             |           | S2 | .4401 | .2117 | .3894 | .5278 | .3549 |
+|             |           | S3 | .4625 | .5111 | .5430 | .5677 | .5789 |
+|   410092949 |           | S1 | .9121 | .7670 | .5725 | .6612 | .5842 |
+|             |           | S2 | .9565 | .7394 | .4190 | .5749 | .5625 |
+|             |           | S3 | .9121 | .6801 | .7628 | .4899 | .6462 |
+
 ### Others
 
 | a | Source |
 |---|--------|
 | 0x6c078965 = 1812433253 = (1289)(1406077) | [Borosh-Niederreiter](https://www.gnu.org/software/gsl/doc/html/rng.html#c.gsl_rng_borosh13) |
 | 0x01000193 = 16777619 = (16777619)| [32b FNV prime](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV_hash_parameters) |
+| 0xdeece66d = 3740067437 = (41)(163)(559639)| [Truncated POSIX rand48 LCG](https://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use)
 
 # 32b Galois LFSRs with maximum period
 ```ts
-() => a = (a >>> 1) ^ (-(a & 1) & 0xd0000001);
-() => a = (a >>> 1) ^ (-(a & 1) & 0x80200003);
+() => x = (x >>> 1) ^ (-(x & 1) & 0xd0000001);
+() => x = (x >>> 1) ^ (-(x & 1) & 0x80200003);
 ```
 
 # Weyl Sequence
