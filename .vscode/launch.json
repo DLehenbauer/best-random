@@ -77,8 +77,8 @@
             "type": "node",
             "request": "launch",
             "name": "p",
-            "cwd": "${workspaceFolder}/tools",
-            "program": "${workspaceFolder}/tools/p.js",
+            "cwd": "${workspaceFolder}/experiments/x3",
+            "program": "p.js",
             "console": "integratedTerminal"
         }
     ]
