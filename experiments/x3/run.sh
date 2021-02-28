@@ -17,20 +17,20 @@ run () {
         && cat report-mod3-$name.json | node f.js > $argsFile
 }
 
-# rm $argsFile
-# rm report-*.json
-# for i in {0..31}
-# do
-#     for j in {0..31}
-#     do
-#         echo "$i $j" >> $argsFile
-#     done
-# done
+rm $argsFile
+rm report-*.json
+for i in {0..31}
+do
+    for j in {0..31}
+    do
+        echo "$i $j" >> $argsFile
+    done
+done
 
-# run tiny 10485760 \
-#     && run small 104857600 \
-#     && run standard 1073741824 \
-#     && run big 10737418240 \
-#     && run huge 107374182400 \
+run tiny 10485760 \
+    && run small 104857600 \
+    && run standard 1073741824 \
+    && run big 10737418240 \
+    && run huge 107374182400 \
     run tera 1099511627776 \
     && run ten-tera 10995116277760
