@@ -26,15 +26,29 @@ function show(table) {
 async function main() {
     const total = await wc("args");
 
+    if (table.length < 1) {
+        console.log(`completed: ${table.length}/${total} (Waiting for results.)`);
+        return;
+    }
+
+    const float = (v) => Math.round(v * 1000) / 1000;
     const percent = (v) => (v * 100).toFixed(2)
-    const ok = table.filter((row) => row.evaluation === 'ok').length;
-    const worrying = table.filter((row) => row.evaluation.match(/worrying/i)).length;
-    const unusual = table.filter((row) => row.evaluation.match(/unusual/i)).length - worrying;
+
+    const { ok, worrying, unusual, pMin, pSum, pMax } = table.reduce((stats, row) => {
+        if (row.evaluation === 'ok') { stats.ok++; }
+        else if (row.evaluation.match(/worrying/i)) { stats.worrying++; }
+        else { stats.unusual++; }
+
+        stats.pMin = Math.min(stats.pMin, row.p);
+        stats.pMax = Math.max(stats.pMax, row.p);
+        stats.pSum += row.p;
+
+        return stats;
+    }, { ok: 0, worrying: 0, unusual: 0, pMin: +Infinity, pSum: 0, pMax: -Infinity });
 
     console.clear();
-    console.log(`completed: ${table.length}/${total}   ok: ${ok} (${percent(ok / table.length)}%)   unusual: ${unusual} (${percent(unusual / table.length)}%)   worrying: ${worrying} (${percent(worrying / table.length)}%)
-    `);
-
+    console.log(`completed: ${table.length}/${total} (${table[0].size})   ok: ${ok} (${percent(ok / table.length)}%)   unusual: ${unusual} (${percent(unusual / table.length)}%)   worrying: ${worrying} (${percent(worrying / table.length)}%)`);
+    console.log(`  pMin: ${pMin}   pAvg: ${float(pSum / table.length)}   pMax: ${pMax}\n`);
 
     table.sort((left, right) => right.passed - left.passed);
 
