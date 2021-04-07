@@ -29,14 +29,8 @@ void advance() {
     w = t;
 }
 
-uint32_t mix(uint32_t a) {
-    a = rot(a, r0);
-    a += rot(y, r1);
-    return a;
-}
-
-uint32_t hi32() { return mix(x - s); }
-uint32_t lo32() { return mix(s - w); }
+uint32_t hi32() { return rot(x - z, z) ^ rot(y, z ^ r0); }
+uint32_t lo32() { return rot(z - w, w) ^ rot(x, w ^ r1); }
 
 uint32_t rng_u32h() { advance(); return hi32(); }
 uint32_t rng_u32l() { advance(); return lo32(); }

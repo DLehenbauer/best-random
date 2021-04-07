@@ -1,2 +1,2 @@
-static uint32_t r0 = 9;
-static uint32_t r1 = 4;
+static uint32_t r0 = 16;
+static uint32_t r1 = 8;
