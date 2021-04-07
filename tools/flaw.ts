@@ -17,7 +17,7 @@ function forward() {
     w = t;
 }
 
-function backward() {
+export function backward() {
     let t = w ^ z << 11;
     t = undoXorShiftRight(t, 18);
     t = undoXorShiftLeft(t, 15);
@@ -28,7 +28,7 @@ function backward() {
     x = t;
 }
 
-function dec(value: number) {
+export function dec(value: number) {
     const s = value.toString();
     return "00".substr(s.length) + s;
 }
@@ -36,9 +36,10 @@ function dec(value: number) {
 const mix = (a: number, b: number) => {
     const rot = (v: number, k: number) => (v << k) | (v >>> (32 - k));
 
-    a += rot(Math.imul(b, 16777619), b);
-    a ^= a >>> ((b >>> 30) + 14);
-    return (a + b) >>> 0;
+    a *= rot(a, 7) | 16777619;
+    a -= rot(b, 10);
+
+    return a >>> 0;
 }
 
 const dumpState = (i: number) => {
@@ -47,8 +48,8 @@ const dumpState = (i: number) => {
 
     const mb = (i * 8 / 1024 / 1024).toFixed(2);
 
-    const hiArgs: [number, number] = [x, z - c];
-    const loArgs: [number, number] = [w, c - y];
+    const hiArgs: [number, number] = [x - z, y];
+    const loArgs: [number, number] = [w - x, y];
     const m1 = mix(...hiArgs);
     const m2 = mix(...loArgs);
     const hiPretty = hiArgs.map(value => `0x${hex(value)}`).join(",");
