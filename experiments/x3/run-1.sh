@@ -38,7 +38,7 @@ done
 all tiny 10485760 \
     && all small 104857600 \
     && all standard 1073741824 \
-    && mod3 big 10737418240 \
-    && mod3 huge 107374182400 \
-    && mod3 tera 1099511627776 \
-    && mod3 ten-tera 10995116277760
+    && all big 10737418240 \
+    && all huge 107374182400 \
+    && all tera 1099511627776 \
+    && all ten-tera 10995116277760
