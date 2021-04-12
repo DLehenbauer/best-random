@@ -48,8 +48,8 @@ unif01_Gen *createGenerator(bool high32, bool low32, bool reversed)
     else if (low32)
     {
         return reversed
-            ? unif01_CreateExternGenBits("best-random (low 32b reversed)", gen32_high_rev)
-            : unif01_CreateExternGenBits("best-random (low 32b)", gen32_high);
+            ? unif01_CreateExternGenBits("best-random (low 32b reversed)", gen32_low_rev)
+            : unif01_CreateExternGenBits("best-random (low 32b)", gen32_low);
     }
     else
     {
