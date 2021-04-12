@@ -73,7 +73,7 @@ Notes:
 |  0x17623cd5 =  392314069 = (7)(43)(59)(22091)      | S1 | .9095 | .8292 | .8536 | .8489 | .8198 |
 |  0x895d1c7d = 2304580733 = (7)(13)(25325063)       | S2 | .9691 | .7207 | .7662 | .6537 | .6159 |
 |                                                    | S3 | .9095 | .8061 | .7869 | .7932 | .7923 |
-|     0x10dcd = 69069      = (3)(7)(11)(13)(23)      | S1 | .4625 | .3131 | .4572 | .5529 | .3767 |
+|     0x10dcd =      69069 = (3)(7)(11)(13)(23)      | S1 | .4625 | .3131 | .4572 | .5529 | .3767 |
 |                                                    | S2 | .4401 | .2117 | .3894 | .5278 | .3549 |
 |                                                    | S3 | .4625 | .5111 | .5430 | .5677 | .5789 |
 |  0x18718595 = 410092949  = (7)(157)(373151)        | S1 | .9121 | .7670 | .5725 | .6612 | .5842 |
@@ -84,9 +84,9 @@ Notes:
 
 | a | Source |
 |---|--------|
-| 0x6c078965 = 1812433253 = (1289)(1406077) | [Borosh-Niederreiter](https://www.gnu.org/software/gsl/doc/html/rng.html#c.gsl_rng_borosh13) |
-| 0x01000193 = 16777619 = (16777619)| [32b FNV prime](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV_hash_parameters) |
-| 0xdeece66d = 3740067437 = (41)(163)(559639)| [Truncated POSIX rand48 LCG](https://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use)
+| 0x01000193 =   16777619 =        (16777619) | [32b FNV prime](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV_hash_parameters) |
+| 0x6c078965 = 1812433253 = (1289)(1406077)   | [Borosh-Niederreiter](https://www.gnu.org/software/gsl/doc/html/rng.html#c.gsl_rng_borosh13) |
+| 0xdeece66d = 3740067437 = (41)(163)(559639) | [Truncated POSIX rand48 LCG](https://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use)
 
 # 32b Galois LFSRs with maximum period
 ```ts
@@ -99,7 +99,7 @@ Notes:
 |---|--------|
 | 0x9e3779b9 = 2654435769 = (3)(89)(523)(19009) | [Golden ratio](https://softwareengineering.stackexchange.com/questions/402542/where-do-magic-hashing-constants-like-0x9e3779b9-and-0x9e3779b1-come-from) |
 | 0x6d2b79f5 = 1831565813 = (7)(11)(859)(27691) | [Mulberry32](https://gist.github.com/tommyettinger/46a874533244883189143505d203312c) |
-| 362437 | [xorwow](https://en.wikipedia.org/wiki/Xorshift#xorwow) |
+|    0x587C5 =     362437 = (59)(6143)          | [xorwow](https://en.wikipedia.org/wiki/Xorshift#xorwow) |
 
 # Permutations
 |  shift  | range |
@@ -109,4 +109,3 @@ Notes:
 | a >> 29 |  0..7 |
 | a >> 30 |  0..3 |
 | a >> 31 |  0..1 |
-
