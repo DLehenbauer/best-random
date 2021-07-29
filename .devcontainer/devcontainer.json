@@ -19,7 +19,8 @@
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
 		"ms-azuretools.vscode-docker",
-		"ms-vscode.cpptools"
+		"ms-vscode.cpptools",
+		"mutantdino.resourcemonitor"
 	],
 
 	"postCreateCommand": "npm install && npm run install:tools"
