@@ -43,7 +43,7 @@ uint32_t mix(uint32_t a, uint32_t b) {
 uint32_t hi32() { return mix(x - z, y); }
 uint32_t lo32() { return mix(z - y, x); }
 ```
-z=27: BCFN begins to fail at 512gb.  Mod3 good at 1 tera.
+r0=27: BCFN begins to fail at 512gb.  Mod3 good at 1 tera.
 
   ┌─────────┬────┬────┬────────────┬───────┬────────┬──────────────┐
   │ (index) │ p0 │ p1 │ evaluation │   p   │ passed │    worst     │
@@ -59,3 +59,37 @@ z=27: BCFN begins to fail at 512gb.  Mod3 good at 1 tera.
   │    8    │ 7  │ 0  │    'ok'    │ 0.645 │   1    │ { p: 0.645 } │
   │    9    │ 9  │ 0  │    'ok'    │ 0.627 │   1    │ { p: 0.627 } │
   └─────────┴────┴────┴────────────┴───────┴────────┴──────────────┘
+
+```cpp
+uint32_t hi32() { return rot(x - z, z ^ r0) ^ rot(y, z); }
+uint32_t lo32() { return rot(z - y, z ^ r1) ^ rot(x, z); }
+```
+```
+  ┌─────────┬────┬────┬────────────┬───────┬────────┬─────────────────────────────────────┐
+  │ (index) │ p0 │ p1 │ evaluation │   p   │ passed │                worst                │
+  ├─────────┼────┼────┼────────────┼───────┼────────┼─────────────────────────────────────┤
+  │    0    │ 23 │ 19 │    'ok'    │ 0.995 │   13   │    { name: 'rda 1/1', p: 0.34 }     │
+  │    1    │ 21 │ 15 │    'ok'    │ 0.991 │   13   │    { name: 'z9 1/1', p: 0.305 }     │
+  │    2    │ 15 │ 21 │    'ok'    │ 0.988 │   13   │     { name: 'z9 1/1', p: 0.29 }     │
+  │    3    │ 22 │ 31 │    'ok'    │ 0.943 │   13   │ { name: 'binr -c 1/280', p: 0.198 } │
+  │    4    │ 23 │ 23 │    'ok'    │ 0.943 │   13   │ { name: 'binr -c 1/280', p: 0.198 } │
+  │    5    │ 21 │ 27 │    'ok'    │ 0.942 │   13   │   { name: 'sh5da 1/1', p: 0.197 }   │
+  │    6    │ 15 │ 19 │    'ok'    │ 0.927 │   13   │  { name: 'diff12 1/7', p: 0.182 }   │
+  │    7    │ 31 │ 17 │    'ok'    │ 0.925 │   13   │    { name: 'z9 1/1', p: 0.181 }     │
+  │    8    │ 22 │ 14 │    'ok'    │ 0.873 │   13   │   { name: 'z9 -t 1/1', p: 0.147 }   │
+  │    9    │ 22 │ 29 │    'ok'    │ 0.844 │   13   │   { name: 'sh5da 1/1', p: 0.133 }   │
+  └─────────┴────┴────┴────────────┴───────┴────────┴─────────────────────────────────────┘
+```
+
+2TB+, Crush x25 @ 72-80%, Mod3 to 2e+13+ bytes
+Both 32b reversed had 2 failures in 'CollisionOver, t=20' tests
+``` cpp
+uint32_t hi32() { return rot(x - z, z ^ 23) + rot(y, z); }
+uint32_t lo32() { return rot(z - y, y) ^ rot(x, y ^ 19); }
+```
+
+```cpp
+uint32_t hi32() { return rot(x ^ z, z) + rot(y, z ^ 23); }
+uint32_t lo32() { return rot(z ^ y, y) + rot(x, y ^ 19); }
+```
+2TB reported unusual BCFN.  Strong high crush (88-84%).  Mod3 good at 2e+13+

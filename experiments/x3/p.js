@@ -2,7 +2,24 @@ const assert = require("assert").strict;
 const fs = require('fs');
 
 async function parseAll(data, filename) {
-    const configExp = /^\*{5} MCP version ([^ ]+) --([^ ]+) \*{5}$/gm;
+    const configExp = /^\*{5} MCP version ([^ ]+) ([^ ]+) \*{5}$/gm;
+
+    const bytesToSize = {
+        10485760: "tiny",
+        104857600: "small",
+        1073741824: "standard",
+        10737418240: "big",
+        107374182400: "huge",
+        1099511627776: "tera",
+        10995116277760: "ten-tera",
+    };
+
+    const friendlySize = (size) => {
+        const maybeFriendly = bytesToSize[size];
+        return maybeFriendly !== undefined
+            ? maybeFriendly
+            : size;
+    }
     
     return new Promise((accept) => {
         const matchAll = (exp, callback) => {
@@ -26,7 +43,7 @@ async function parseAll(data, filename) {
 
         if (match(configExp, ($) => {
             result.version = $[1];
-            result.size = $[2];
+            result.size = friendlySize($[2]);
         })) {
             const testExp = /^============\n([^)]+) \(\d+ bytes\)\n=======[\s\S]*?^one sided P value \(very small numbers are bad\)\nP = ([^\n]+)$/gm;
             const overallExp = /^====================\ncompleted (\d+) tests\n(\d+) out of (\d+) tests ok\.\n([\s\S]*)\n\nOverall summary one sided P-value \(smaller numbers bad\)\nP = ([^ ]+) : (.*)+$/gm;

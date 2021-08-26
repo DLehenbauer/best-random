@@ -9,6 +9,7 @@ static uint32_t x = 0;
 static uint32_t y = 0;
 static uint32_t z = 0;
 static uint32_t w = 0;
+static uint32_t s = 0;
 
 // Modern GCC/CLang reduce this to a single 'rol' instruction on x86/x64.
 static inline uint32_t rot(uint32_t v, uint32_t k) { k &= 31; return (v << k) | (v >> (32 - k)); }
@@ -18,6 +19,8 @@ void advance() {
     x = y;
     y = z;
     z = w;
+
+    s += S;
 
     t ^= t << 15;   // x (lo 17b)  0fedcba9 87654321 0....... ........
     t ^= t >> 18;   // x (hi 14b)  ........ ........ ..fedcba 98765432

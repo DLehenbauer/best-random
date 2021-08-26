@@ -49,5 +49,5 @@ do
     done
 done
 
-run  "all" "./mcp" "-d '$logDir/{1}-{2}' > /dev/nul"
+run  "all" "./mcp" "-d '$logDir/{1}-{2}' > /dev/null"
 #run "mod3" "./bin/mod3" "> '$logDir/{1}-{2}/report.txt'"
