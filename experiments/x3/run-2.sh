@@ -6,30 +6,41 @@ argsFile=$PWD/args
 workDir="../../tools/GJRand/src/gjrand.4.3.0.0/testunif/"
 rng="../../../../Rng/rng"
 
-all () {
-    size=$1
-    filter=$2
+test () {
+    testName=$1
+    bin=$2
+    reportArg=$3
+    sizeName=$4
+    sizeBytes=$5
+
+    reportFile=report-$testName-$sizeName.json
 
     rm -rf $logDir
+
+    echo "$testName: $sizeName $(cat $argsFile | wc --lines)"
+
     mkdir $logDir \
-        && cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir '$logDir/{1}-{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL ./mcp --$size -d '$logDir/{1}-{2}'" \
-        && node p.js > report-$size.json \
-        && cat report-$size.json | node f.js > $argsFile
+        && cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir '$logDir/{1}-{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL $bin $sizeBytes $reportArg" \
+        && node p.js > $reportFile \
+        && cat $reportFile | node f.js > $argsFile
 }
 
-mod3 () {
+run () {
     name=$1
-    size=$2
+    bin=$2
+    reportArg=$3
 
-    rm -rf $logDir
-    mkdir $logDir \
-        && cat $argsFile | parallel --colsep ' ' --workDir "$workDir/bin" "mkdir '$logDir/{1}-{2}' && '../$rng' -p0 {1} -p1 {2} | stdbuf -oL -eL ./mod3 $size > '$logDir/{1}-{2}/report.txt'" \
-        && node p.js > report-mod3-$name.json \
-        && cat report-mod3-$name.json | node f.js > $argsFile
+    test $name $bin "$reportArg" tiny 10485760 \
+        && test $name $bin "$reportArg" small 104857600 \
+        && test $name $bin "$reportArg" standard 1073741824 \
+        && test $name $bin "$reportArg" big 10737418240 \
+        && test $name $bin "$reportArg" huge 107374182400 \
+        && test $name $bin "$reportArg" tera 1099511627776 \
+        && test $name $bin "$reportArg" ten-tera 10995116277760
 }
 
-rm $argsFile
-rm report-*.json
+rm -f $argsFile
+rm -f report-*.json
 for i in {0..31}
 do
     for j in {0..31}
@@ -38,10 +49,5 @@ do
     done
 done
 
-all tiny 10485760 \
-    && all small 104857600 \
-    && all standard 1073741824 \
-    && all big 10737418240 \
-    && all huge 107374182400 \
-    && all tera 1099511627776 \
-    && all ten-tera 10995116277760
+run  "all" "./mcp" "-d '$logDir/{1}-{2}' > /dev/nul"
+#run "mod3" "./bin/mod3" "> '$logDir/{1}-{2}/report.txt'"
