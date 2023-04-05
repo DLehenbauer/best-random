@@ -27,4 +27,4 @@ base:
 	mv lib/*.so lib-so/.
 
 clean:
-	rm -rf ./src
+	rm -rf TestU01_rng ./bin ./include ./lib-so ./lib ./share

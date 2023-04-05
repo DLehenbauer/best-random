@@ -93,3 +93,45 @@ uint32_t hi32() { return rot(x ^ z, z) + rot(y, z ^ 23); }
 uint32_t lo32() { return rot(z ^ y, y) + rot(x, y ^ 19); }
 ```
 2TB reported unusual BCFN.  Strong high crush (88-84%).  Mod3 good at 2e+13+
+
+```cpp
+uint32_t hi32() { return rot(x - z, z) - rot(y, z ^ r0); }
+uint32_t lo32() { return rot(y - x, x) + rot(w, x ^ r1); }
+```
+Mod3 fails at huge (460)
+
+```cpp
+uint32_t hi32() { return rot(x - z, z) + rot(y, z ^ 22); }
+uint32_t lo32() { return rot(z - y, x) + rot(w, x ^ 27); }
+```
+Mod3 fails at tera (33)
+
+```cpp
+uint32_t hi32() { return rot(x ^ z, z ^ 23) + rot(y, z); }
+uint32_t lo32() { return rot(z - y, y) ^ rot(x, y ^ 19); }
+```
+4TB reported unusual FPF, hi32 weaker than lo32.
+
+```cpp
+uint32_t hi32() { return rot(x - z, z) ^ rot(y, z ^ 23); }
+uint32_t lo32() { return rot(z - y, y) ^ rot(x, y ^ 19); }
+```
+2TB reported unusal BCFN, hi crush x20 @ 80%
+
+```cpp
+uint32_t hi32() { return rot(x - z, z) ^ rot(y, z ^ r0); }
+uint32_t lo32() { return rot(z - y, y) ^ rot(w, y ^ r1); }
+```
+Best tera: 31/22
+
+```cpp
+uint32_t hi32() { return rot(x - z, 29) + rot(y, 14); }
+uint32_t lo32() { return rot(z - y, 20) - rot(x, 5); }
+```
+One passed huge w/p=0.198, BCFN unusual @128gb, mod3 not looking good at 5e+11.
+
+```cpp
+uint32_t hi32() { return rot(x - z, 20) + rot(y, 5); }
+uint32_t lo32() { return rot(z - y, 5) - rot(x, 22); }
+```
+u32h/l fail at 64gb, mod3 ok to 1.5e+13, crush h:76/84, l:64/60
