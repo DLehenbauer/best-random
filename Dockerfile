@@ -7,6 +7,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         ca-certificates \
         git \
         locales-all \
+        parallel \
         procps \
         python \
         tmux \

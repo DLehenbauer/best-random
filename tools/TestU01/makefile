@@ -20,7 +20,7 @@ pcg:
 
 base:
 	cd src/TestU01-1.2.3 && \
-	./configure --prefix="$(ROOT_DIR)" && \
+	./configure --prefix="$(ROOT_DIR)" --build=aarch64-unknown-linux-gnu && \
 	make -j 6 && \
 	make -j 6 install
 	mkdir lib-so
