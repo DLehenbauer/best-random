@@ -1,4 +1,5 @@
 #!/bin/bash
+rm ../../tools/Rng/rng
 npm run make:rng:rng
 
 logDir=$PWD/logs
@@ -49,5 +50,5 @@ do
     done
 done
 
-run  "all" "./mcp" "-d '$logDir/{1}-{2}' > /dev/null"
-#run "mod3" "./bin/mod3" "> '$logDir/{1}-{2}/report.txt'"
+#run  "all" "./mcp" "-d '$logDir/{1}-{2}' > /dev/null"
+run "mod3" "./bin/mod3" "> '$logDir/{1}-{2}/report.txt'"
