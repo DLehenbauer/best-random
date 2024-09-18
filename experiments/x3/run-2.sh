@@ -6,38 +6,73 @@ logDir=$PWD/logs
 argsFile=$PWD/args
 workDir="../../tools/GJRand/src/gjrand.4.3.0.0/testunif/"
 rng="../../../../Rng/rng"
+bins=("./bin/mod3" "./bin/z9")
 
-test () {
-    testName=$1
-    bin=$2
-    reportArg=$3
-    sizeName=$4
-    sizeBytes=$5
+test_bins () {
+    sizeName=$1
+    sizeBytes=$2
+    reportArg="> '$logDir/{1}-{2}/report.txt'"
+
+    for bin in "${bins[@]}"; do
+        testName=$(basename ${bin})
+
+        reportFile=report-$testName-$sizeName.json
+
+        rm -rf $logDir
+
+        echo -n "$testName: $sizeName $(cat $argsFile | wc --lines) "
+        
+        start=`date`
+        
+        mkdir $logDir \
+            && cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir '$logDir/{1}-{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL $bin $sizeBytes $reportArg" \
+            && node p.js > $reportFile \
+            && cat $reportFile | node f.js > $argsFile
+
+        exit_code=$?
+
+        if [ $exit_code -ne 0 ]; then
+            >&2 echo "\nFailed with exit code ${exit_code}."
+            exit $exit_code
+        fi
+
+        stop=`date`
+        elapsed=`date -ud@$(($(date -ud"$stop" +%s)-$(date -ud"$start" +%s))) +%T`
+        echo "-> $(cat $argsFile | wc --lines) ($elapsed)"
+    done
+}
+
+test_all () {
+    sizeName=$1
+    sizeBytes=$2
+    reportArg="-d '$logDir/{1}-{2}' > /dev/null"
+    bin="./mcp"
+
+    testName=$(basename ${bin})
 
     reportFile=report-$testName-$sizeName.json
 
     rm -rf $logDir
 
-    echo "$testName: $sizeName $(cat $argsFile | wc --lines)"
-
+    echo -n "$testName: $sizeName $(cat $argsFile | wc --lines) "
+    
+    start=`date`
+    
     mkdir $logDir \
         && cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir '$logDir/{1}-{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL $bin $sizeBytes $reportArg" \
         && node p.js > $reportFile \
         && cat $reportFile | node f.js > $argsFile
-}
 
-run () {
-    name=$1
-    bin=$2
-    reportArg=$3
+    exit_code=$?
 
-    test $name $bin "$reportArg" tiny 10485760 \
-        && test $name $bin "$reportArg" small 104857600 \
-        && test $name $bin "$reportArg" standard 1073741824 \
-        && test $name $bin "$reportArg" big 10737418240 \
-        && test $name $bin "$reportArg" huge 107374182400 \
-        && test $name $bin "$reportArg" tera 1099511627776 \
-        && test $name $bin "$reportArg" ten-tera 10995116277760
+    if [ $exit_code -ne 0 ]; then
+        >&2 echo "\nFailed with exit code ${exit_code}."
+        exit $exit_code
+    fi
+
+    stop=`date`
+    elapsed=`date -ud@$(($(date -ud"$stop" +%s)-$(date -ud"$start" +%s))) +%T`
+    echo "-> $(cat $argsFile | wc --lines) ($elapsed)"
 }
 
 rm -f $argsFile
@@ -50,5 +85,23 @@ do
     done
 done
 
-#run  "all" "./mcp" "-d '$logDir/{1}-{2}' > /dev/null"
-run "mod3" "./bin/mod3" "> '$logDir/{1}-{2}/report.txt'"
+size_tiny=10485760
+size_small=104857600
+size_standard=1073741824
+size_big=10737418240
+size_standard=1073741824
+size_huge=107374182400
+size_tera=1099511627776
+size_ten_tera=10995116277760
+
+#test_bins tiny $size_tiny \
+test_bins small $size_small \
+    && test_bins standard $size_standard \
+    && test_bins big $size_big \
+    && test_all standard $size_standard \
+    && test_bins huge $size_huge \
+    && test_bins tera $size_tera \
+    && test_all big $size_big \
+    && test_all huge $size_huge \
+    && test_all tera $size_tera \
+    && test_all ten-tera $size_ten_tera
