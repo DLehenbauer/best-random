@@ -59,6 +59,10 @@ async function main() {
     console.group("Best Worst")
     show(table.sort((left, right) => right.worst.p - left.worst.p));
     console.groupEnd();
+
+    console.group("Worst")
+    show(table.sort((left, right) => left.worst.p - right.worst.p));
+    console.groupEnd();    
 }
 
 main();
