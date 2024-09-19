@@ -1,7 +1,11 @@
---- adaptive/adaptive_crush.c	2024-09-19 19:52:15.609957396 +0000
-+++ adaptive/adaptive_crush.fixed.c	2024-09-19 19:52:40.315450112 +0000
-@@ -44,10 +44,6 @@
- #define ITERATION_LIMIT 1
+--- adaptive/adaptive_crush.c	2024-09-19 21:06:49.370947776 +0000
++++ adaptive/adaptive_crush.fixed.c	2024-09-19 21:06:55.647338234 +0000
+@@ -41,13 +41,9 @@
+ #define ADAPTIVE_CRUSH_NUM 96
+ #define ALPHA 0.1
+ #define BETA 0.00000001
+-#define ITERATION_LIMIT 1
++#define ITERATION_LIMIT 3
  #define BREAK (ITERATION_LIMIT+1)
  
 -double bbattery_pVal[1 + NDIM] = { 0 };
