@@ -7,6 +7,7 @@
 #include <string.h>
 #include <time.h>
 #include "TestU01.h"
+#include "adaptive/adaptive_crush.h"
 #include "common.h"
 
 extern unif01_Gen *createGenerator(bool high32, bool low32, bool reversed);
@@ -18,6 +19,7 @@ int usage(char *name)
     printf("  -s = SmallCrush\n");
     printf("  -c = Crush\n");
     printf("  -b = BigCrush\n");
+    printf("  -a = AdaptiveCrush\n");
     printf("  -h = high32 bits\n");
     printf("  -l = low32 bits\n");
     printf("  -r = reverse bits\n");
@@ -212,6 +214,7 @@ int main(int argc, char *argv[])
     bool arg_small = false;
     bool arg_medium = false;
     bool arg_big = false;
+    bool arg_adaptive = false;
 
     for (int i = 1; i < argc; i++)
     {
@@ -226,6 +229,10 @@ int main(int argc, char *argv[])
         else if (strcmp(argv[i], "-b") == 0)
         {
             arg_big = true;
+        }
+        else if (strcmp(argv[i], "-a") == 0)
+        {
+            arg_adaptive = true;
         }
         else if (strcmp(argv[i], "-h") == 0)
         {
@@ -281,6 +288,10 @@ int main(int argc, char *argv[])
         else if (arg_big)
         {
             run("BigCrush", bbattery_BigCrush);
+        }
+        else if (arg_adaptive)
+        {
+            run("AdaptiveCrush", bbattery_Adaptive_Crush);
         }
         else
         {

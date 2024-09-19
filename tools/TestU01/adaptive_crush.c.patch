@@ -1,0 +1,13 @@
+--- adaptive/adaptive_crush.c	2024-09-19 19:52:15.609957396 +0000
++++ adaptive/adaptive_crush.fixed.c	2024-09-19 19:52:40.315450112 +0000
+@@ -44,10 +44,6 @@
+ #define ITERATION_LIMIT 1
+ #define BREAK (ITERATION_LIMIT+1)
+ 
+-double bbattery_pVal[1 + NDIM] = { 0 };
+-char *bbattery_TestNames[1 + NDIM] = { 0 };
+-int bbattery_NTests;
+-
+ void DetectIteration (double, long *, int *);
+ 
+ 
