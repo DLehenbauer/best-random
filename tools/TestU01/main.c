@@ -33,7 +33,7 @@ bool arg_lo = false;
 bool arg_rev = false;
 
 uint32_t remainingIterations = 1;
-double testToTotalPVal[201] = {0};
+double testToTotalConfidence[201] = {0};
 uint32_t testToTotalFailures[201] = {0};
 double totalIterationsRun = 0;
 double totalIterationsFailed = 0;
@@ -42,22 +42,30 @@ double totalCasesUnusual = 0;
 double totalCasesSuspicious = 0;
 double totalCasesFailed = 0;
 
-double computeDelta(double pVal) {
+// Mirrors two-sided p-values to the left side.  The result is a number in the range [0, 0.5],
+// with 0.5 being the most probable.
+double computePValueDelta(double pVal) {
     return pVal < 0.5
         ? pVal
         : 1.0 - pVal;
 }
 
-double getDelta(uint32_t index) {
-    return computeDelta(bbattery_pVal[index]);
+double getPValueDelta(uint32_t index) {
+    return computePValueDelta(bbattery_pVal[index]);
 }
 
-double getAvg(uint32_t index) {
-    return testToTotalPVal[index] / totalIterationsRun;
+// Given a two-sided p-value, returns the confidence score.
+// The result is a number in the range [0, 1], with 1 being the most confident.
+double computeConfidence(double pvalue) {
+    return 2.0 * computePValueDelta(pvalue);
 }
 
-double getAvgDelta(uint32_t index) {
-    return computeDelta(getAvg(index));
+double getConfidence(uint32_t index) {
+    return computeConfidence(bbattery_pVal[index]);
+}
+
+double getAvgConfidence(uint32_t index) {
+    return testToTotalConfidence[index] / totalIterationsRun;
 }
 
 struct sorted_result_t
@@ -69,8 +77,8 @@ static int sorted_result_cmp_avg(const void *left, const void *right)
 {
     const struct sorted_result_t *leftResult = left, *rightResult = right;
 
-    double leftAvg  = getAvgDelta(leftResult->index);
-    double rightAvg = getAvgDelta(rightResult->index);
+    double leftAvg  = getAvgConfidence(leftResult->index);
+    double rightAvg = getAvgConfidence(rightResult->index);
 
     return leftAvg < rightAvg
                ? 1
@@ -83,12 +91,12 @@ static int sorted_result_cmp_delta(const void *left, const void *right)
 {
     const struct sorted_result_t *leftResult = left, *rightResult = right;
 
-    double leftDelta  = getDelta(leftResult->index);
-    double rightDelta = getDelta(rightResult->index);
+    double leftConfidence  = getConfidence(leftResult->index);
+    double rightConfidence = getConfidence(rightResult->index);
 
-    return leftDelta < rightDelta
+    return leftConfidence < rightConfidence
                ? 1
-               : leftDelta > rightDelta
+               : leftConfidence > rightConfidence
                      ? -1
                      : 0;
 }
@@ -105,7 +113,8 @@ void displayResults(char* name, struct sorted_result_t* results, bool all) {
     for (int i = 0; i < bbattery_NTests; i++)
     {
         uint32_t index = results[i].index;
-        double delta = getDelta(index);
+        double confidence   = getConfidence(index);
+        double delta        = getPValueDelta(index);
         bool testFailed     = delta < gofw_Suspectp;
         bool testSuspicious = !testFailed && delta < 0.0025;
         bool testUnusual    = !testSuspicious && delta < 0.01;
@@ -129,22 +138,23 @@ void displayResults(char* name, struct sorted_result_t* results, bool all) {
         }
 
         if (printHeader) {
-            printf("    avg p     fail  test                           p\n");
+            printf("    avg conf  fail  test                           p-value   confidence\n");
             printHeader = false;
         }
 
-        printf("    %f  %4d  %-30s %f%-15s\n",
-            getAvgDelta(index),
-            testToTotalFailures[index],
-            bbattery_TestNames[index],
-            delta,
-            testFailed
-                ? "    FAIL!"
-                : testSuspicious
-                    ? "    suspicious"
-                    : testUnusual
-                        ? "    unusual"
-                        : "");
+        printf("    %f  %4d  %-30s %f  %f %-15s\n",
+               getAvgConfidence(index),
+               testToTotalFailures[index],
+               bbattery_TestNames[index],
+               bbattery_pVal[index],
+               confidence,
+               testFailed
+                   ? "    FAIL!"
+               : testSuspicious
+                   ? "    suspicious"
+               : testUnusual
+                   ? "    unusual"
+                   : "");
     }
 
     if (numFailed > 0) {
@@ -191,7 +201,7 @@ int run(char* name, void (*battery)(unif01_Gen *gen))
     for (int i = 0; i < bbattery_NTests; i++)
     {
         results[i].index = i;
-        testToTotalPVal[i] += bbattery_pVal[i];
+        testToTotalConfidence[i] += computeConfidence(bbattery_pVal[i]);
     }
 
     qsort(results, bbattery_NTests, sizeof *results, sorted_result_cmp_delta);
