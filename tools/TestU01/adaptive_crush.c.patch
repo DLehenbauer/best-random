@@ -1,0 +1,48 @@
+--- adaptive_crush.c	2011-08-31 02:07:45.000000000 +0000
++++ adaptive_crush.fixed.c	2024-09-20 16:26:29.502739676 +0000
+@@ -41,13 +41,9 @@
+ #define ADAPTIVE_CRUSH_NUM 96
+ #define ALPHA 0.1
+ #define BETA 0.00000001
+-#define ITERATION_LIMIT 1
++#define ITERATION_LIMIT 6
+ #define BREAK (ITERATION_LIMIT+1)
+ 
+-double bbattery_pVal[1 + NDIM] = { 0 };
+-char *bbattery_TestNames[1 + NDIM] = { 0 };
+-int bbattery_NTests;
+-
+ void DetectIteration (double, long *, int *);
+ 
+ 
+@@ -1481,12 +1477,24 @@
+ 
+ void DetectIteration (double pvalue, long *size, int *i)
+ {
+-  if (pvalue < BETA || pvalue > 1.0-BETA)
++  double confidence = 1.0 - 2 * fabs(pvalue - 0.5);
++
++  if (*i == ITERATION_LIMIT || pvalue < BETA || pvalue > 1.0-BETA) {
++    if (swrite_Basic) {
++      printf("FAIL at iteration %d/%d: pvalue: %f, confidence: %f\n\n", *i + 1, ITERATION_LIMIT, pvalue, confidence);
++    }
+     (*i) = BREAK;
+-  else if (pvalue < ALPHA || pvalue > 1.0-ALPHA){
+-    (*size) = 2 * (*size);
+-    (*i)++;
++  } else if (pvalue < ALPHA || pvalue > 1.0-ALPHA){
++      (*size) = 2 * (*size);
++      (*i)++;
++      if (swrite_Basic) {
++        printf("RETRY at iteration %d/%d: pvalue: %f, confidence: %f\n\n", *i, ITERATION_LIMIT, pvalue, confidence);
++      }
++  }
++  else {
++      if (swrite_Basic) {
++        printf("PASS at iteration %d/%d: pvalue: %f, confidence: %f\n\n", *i + 1, ITERATION_LIMIT, pvalue, confidence);
++      }
++      (*i) = BREAK;
+   }
+-  else
+-    (*i) = BREAK;
+ }
