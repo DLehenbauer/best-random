@@ -337,3 +337,10 @@ Best
   │ 5       │ 19 │ 29 │ 'EXTREMELY Worrying and very unusual' │ 3.94e-63 │ 0      │ { p: 3.94e-63 } │
   │ 6       │ 19 │ 14 │ 'EXTREMELY Worrying and very unusual' │ 1.78e-63 │ 0      │ { p: 1.78e-63 } │
   └─────────┴────┴────┴───────────────────────────────────────┴──────────┴────────┴─────────────────┘
+
+```cpp
+uint32_t hi32() { return rot(x - z, 11) + (y >> 4); }
+uint32_t lo32() { return rot(z - y, 17) - (x >> 7); }
+```
+Practrand fails at 2TB, Hi=76/64, Lo = -4%/64% (?) (MaxOft variants had 0% pass rate)
+
