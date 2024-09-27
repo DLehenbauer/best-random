@@ -84,7 +84,7 @@ Notes:
 
 | a | Source |
 |---|--------|
-| 0x01000193 =   16777619 =        (16777619) | [32b FNV prime](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV_hash_parameters) |
+| 0x01000193 =   16777619 = (16777619)        | [32b FNV prime](https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV_hash_parameters) |
 | 0x6c078965 = 1812433253 = (1289)(1406077)   | [Borosh-Niederreiter](https://www.gnu.org/software/gsl/doc/html/rng.html#c.gsl_rng_borosh13) |
 | 0xdeece66d = 3740067437 = (41)(163)(559639) | [Truncated POSIX rand48 LCG](https://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use)
 

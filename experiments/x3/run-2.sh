@@ -6,7 +6,10 @@ logDir=$PWD/logs
 argsFile=$PWD/args
 workDir="../../tools/GJRand/src/gjrand.4.3.0.0/testunif/"
 rng="../../../../Rng/rng"
-bins=("./bin/mod3" "./bin/z9")
+bins=(
+#    "./bin/mod3"
+    "./bin/z9"
+)
 
 test_bins () {
     sizeName=$1
@@ -75,15 +78,17 @@ test_all () {
     echo "-> $(cat $argsFile | wc --lines) ($elapsed)"
 }
 
-rm -f $argsFile
-rm -f report-*.json
-for i in {0..31}
-do
-    for j in {0..31}
+reset_args () {
+    rm -f $argsFile
+    rm -f report-*.json
+    for i in {0..31}
     do
-        echo "$i $j" >> $argsFile
+        for j in {0..31}
+        do
+            echo "$i $j" >> $argsFile
+        done
     done
-done
+}
 
 size_tiny=10485760
 size_small=104857600
@@ -94,14 +99,17 @@ size_huge=107374182400
 size_tera=1099511627776
 size_ten_tera=10995116277760
 
-#test_bins tiny $size_tiny \
-test_bins small $size_small \
-    && test_bins standard $size_standard \
-    && test_bins big $size_big \
-    && test_all standard $size_standard \
-    && test_bins huge $size_huge \
-    && test_bins tera $size_tera \
-    && test_all big $size_big \
-    && test_all huge $size_huge \
-    && test_all tera $size_tera \
-    && test_all ten-tera $size_ten_tera
+reset_args
+
+# test_bins tiny $size_tiny && \
+# test_bins small $size_small && \
+test_bins standard $size_standard && \
+# test_all standard $size_standard && \
+test_bins big $size_big && \
+# test_all big $size_big && \
+test_bins huge $size_huge && \
+# test_all huge $size_huge && \
+test_bins tera $size_tera && \
+# test_all tera $size_tera && \
+test_bins ten-tera $size_ten_tera && \
+test_all ten-tera $size_ten_tera

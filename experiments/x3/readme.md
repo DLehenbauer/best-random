@@ -1,3 +1,59 @@
+# Candidates
+
+## Candidate 1
+
+```cpp
+uint32_t hi32() { return rot(x - z, z) + rot(y, z ^ r0); }
+uint32_t lo32() { return rot(z - y, z) ^ rot(x, z ^ r1); }
+```
+Passed 16TB+ PractRand and 25/25 AdaptiveCrush tests.
+
+z9 ten-tera completed: 38/0 (undefined)   ok: 0 (0.00%)   unusual: 0 (0.00%)   worrying: 38 (100.00%)
+  pMin: 3.71e-159   pAvg: 0   pMax: 1.87e-11
+
+Best
+  ┌─────────┬────┬────┬───────────────────────────────────────┬──────────┬────────┬─────────────────┐
+  │ (index) │ p0 │ p1 │ evaluation                            │ p        │ passed │ worst           │
+  ├─────────┼────┼────┼───────────────────────────────────────┼──────────┼────────┼─────────────────┤
+  │ 0       │ 23 │ 23 │ 'EXTREMELY Worrying and very unusual' │ 1.87e-11 │ 0      │ { p: 1.87e-11 } │
+  │ 1       │ 15 │ 23 │ 'EXTREMELY Worrying and very unusual' │ 9.01e-16 │ 0      │ { p: 9.01e-16 } │
+  │ 2       │ 19 │ 23 │ 'EXTREMELY Worrying and very unusual' │ 7.86e-20 │ 0      │ { p: 7.86e-20 } │
+  │ 3       │ 13 │ 23 │ 'EXTREMELY Worrying and very unusual' │ 2.56e-20 │ 0      │ { p: 2.56e-20 } │
+  │ 4       │ 31 │ 23 │ 'EXTREMELY Worrying and very unusual' │ 1.23e-25 │ 0      │ { p: 1.23e-25 } │
+  │ 5       │ 11 │ 23 │ 'EXTREMELY Worrying and very unusual' │ 4.91e-28 │ 0      │ { p: 4.91e-28 } │
+  │ 6       │ 15 │ 19 │ 'EXTREMELY Worrying and very unusual' │ 1.92e-29 │ 0      │ { p: 1.92e-29 } │
+  │ 7       │ 31 │ 19 │ 'EXTREMELY Worrying and very unusual' │ 2.46e-35 │ 0      │ { p: 2.46e-35 } │
+  │ 8       │ 14 │ 23 │ 'EXTREMELY Worrying and very unusual' │ 1.62e-41 │ 0      │ { p: 1.62e-41 } │
+  │ 9       │ 21 │ 23 │ 'EXTREMELY Worrying and very unusual' │ 2.17e-42 │ 0      │ { p: 2.17e-42 } │
+  └─────────┴────┴────┴───────────────────────────────────────┴──────────┴────────┴─────────────────┘
+
+# Consideration
+
+## Consider 1
+
+Have not run PractRand, etc. but survived MCP until ten tera?
+
+```cpp
+uint32_t hi32() { return rot(x - z, z) ^ rot(y, z ^ r0); }
+uint32_t lo32() { return rot(z - y, y) - rot(x, y ^ r1); }
+```
+ten-tera completed: 7/0 (mpc)   ok: 0 (0.00%)   unusual: 0 (0.00%)   worrying: 7 (100.00%)
+  pMin: 1.78e-63   pAvg: 0   pMax: 5.07e-16
+
+Best
+  ┌─────────┬────┬────┬───────────────────────────────────────┬──────────┬────────┬─────────────────┐
+  │ (index) │ p0 │ p1 │ evaluation                            │ p        │ passed │ worst           │
+  ├─────────┼────┼────┼───────────────────────────────────────┼──────────┼────────┼─────────────────┤
+  │ 0       │ 23 │ 15 │ 'EXTREMELY Worrying and very unusual' │ 5.07e-16 │ 0      │ { p: 5.07e-16 } │
+  │ 1       │ 23 │ 31 │ 'EXTREMELY Worrying and very unusual' │ 2.48e-18 │ 0      │ { p: 2.48e-18 } │
+  │ 2       │ 19 │ 31 │ 'EXTREMELY Worrying and very unusual' │ 1.3e-28  │ 0      │ { p: 1.3e-28 }  │
+  │ 3       │ 23 │ 21 │ 'EXTREMELY Worrying and very unusual' │ 2e-36    │ 0      │ { p: 2e-36 }    │
+  │ 4       │ 23 │ 14 │ 'EXTREMELY Worrying and very unusual' │ 7e-41    │ 0      │ { p: 7e-41 }    │
+  │ 5       │ 19 │ 29 │ 'EXTREMELY Worrying and very unusual' │ 3.94e-63 │ 0      │ { p: 3.94e-63 } │
+  │ 6       │ 19 │ 14 │ 'EXTREMELY Worrying and very unusual' │ 1.78e-63 │ 0      │ { p: 1.78e-63 } │
+  └─────────┴────┴────┴───────────────────────────────────────┴──────────┴────────┴─────────────────┘
+
+
 ```cpp
 uint32_t hi32() { return rot(x - z, z) + rot(y, z ^ r0); }
 uint32_t lo32() { return rot(w - x, x) + rot(z, x ^ r1); }
@@ -317,26 +373,6 @@ Best Worst
   │ 8       │ 27 │ 5  │ 'ok'       │ 0.617 │ 1      │ { p: 0.617 } │
   │ 9       │ 17 │ 29 │ 'ok'       │ 0.58  │ 1      │ { p: 0.58 }  │
   └─────────┴────┴────┴────────────┴───────┴────────┴──────────────┘
-
-```cpp
-uint32_t hi32() { return rot(x - z, z) ^ rot(y, z ^ r0); }
-uint32_t lo32() { return rot(z - y, y) - rot(x, y ^ r1); }
-```
-ten-tera completed: 7/0 (mpc)   ok: 0 (0.00%)   unusual: 0 (0.00%)   worrying: 7 (100.00%)
-  pMin: 1.78e-63   pAvg: 0   pMax: 5.07e-16
-
-Best
-  ┌─────────┬────┬────┬───────────────────────────────────────┬──────────┬────────┬─────────────────┐
-  │ (index) │ p0 │ p1 │ evaluation                            │ p        │ passed │ worst           │
-  ├─────────┼────┼────┼───────────────────────────────────────┼──────────┼────────┼─────────────────┤
-  │ 0       │ 23 │ 15 │ 'EXTREMELY Worrying and very unusual' │ 5.07e-16 │ 0      │ { p: 5.07e-16 } │
-  │ 1       │ 23 │ 31 │ 'EXTREMELY Worrying and very unusual' │ 2.48e-18 │ 0      │ { p: 2.48e-18 } │
-  │ 2       │ 19 │ 31 │ 'EXTREMELY Worrying and very unusual' │ 1.3e-28  │ 0      │ { p: 1.3e-28 }  │
-  │ 3       │ 23 │ 21 │ 'EXTREMELY Worrying and very unusual' │ 2e-36    │ 0      │ { p: 2e-36 }    │
-  │ 4       │ 23 │ 14 │ 'EXTREMELY Worrying and very unusual' │ 7e-41    │ 0      │ { p: 7e-41 }    │
-  │ 5       │ 19 │ 29 │ 'EXTREMELY Worrying and very unusual' │ 3.94e-63 │ 0      │ { p: 3.94e-63 } │
-  │ 6       │ 19 │ 14 │ 'EXTREMELY Worrying and very unusual' │ 1.78e-63 │ 0      │ { p: 1.78e-63 } │
-  └─────────┴────┴────┴───────────────────────────────────────┴──────────┴────────┴─────────────────┘
 
 ```cpp
 uint32_t hi32() { return rot(x - z, 11) + (y >> 4); }
