@@ -29,10 +29,8 @@ void advance() {
     w = t;
 }
 
-// Passed 16TB+ PractRand and 25/25 AdaptiveCrush tests.
-// Parameterns taken from another x3.  Possibly prospecting can yield stronger ones?
-uint32_t hi32() { return rot(x - z, z) + rot(y, z ^ 23); }
-uint32_t lo32() { return rot(z - y, z) ^ rot(x, z ^ 19); }
+uint32_t hi32() { return rot(x - z, z) + rot(y, z ^ r0); }
+uint32_t lo32() { return rot(z - y, z) ^ rot(x, z ^ r1); }
 
 uint32_t rng_u32h() { advance(); return hi32(); }
 uint32_t rng_u32l() { advance(); return lo32(); }

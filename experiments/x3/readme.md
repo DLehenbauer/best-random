@@ -31,13 +31,13 @@ Best
 
 ## Consider 1
 
-Have not run PractRand, etc. but survived MCP until ten tera?
+Have not run PractRand, etc. but survived (something from gjrand?) until ten tera?
 
 ```cpp
 uint32_t hi32() { return rot(x - z, z) ^ rot(y, z ^ r0); }
 uint32_t lo32() { return rot(z - y, y) - rot(x, y ^ r1); }
 ```
-ten-tera completed: 7/0 (mpc)   ok: 0 (0.00%)   unusual: 0 (0.00%)   worrying: 7 (100.00%)
+ten-tera completed: 7/0 (?)   ok: 0 (0.00%)   unusual: 0 (0.00%)   worrying: 7 (100.00%)
   pMin: 1.78e-63   pAvg: 0   pMax: 5.07e-16
 
 Best
