@@ -137,32 +137,40 @@ async function parseMod3(data, filename) {
     let table = [];
 
     const logsDir = "./logs";
-    const directories = fs.readdirSync(logsDir);
 
-    for (const dir of directories) {
-        const dirPath = path.join(logsDir, dir);
-        const match = dir.match(/^(\d+)-(\d+)$/);
+    const dirs1 = fs.readdirSync(logsDir);
+    for (const dir1 of dirs1) {
+        const dirPath1 = path.join(logsDir, dir1);
+        const match = dir1.match(/^(\d+)$/);
         if (match) {
             const p0 = parseInt(match[1], 10);
-            const p1 = parseInt(match[2], 10);
-            const filename = path.join(dirPath, 'report.txt');
-            if (fs.existsSync(filename)) {
-                try {
-                    const data = fs.readFileSync(filename, 'utf8');
 
-                    const results = await parseAll(data, filename);
-                    table.push({
-                        p0,
-                        p1,
-                        ...results
-                    });
-                } catch (e) {
-                    console.warn(`Abort at ${p0},${p1}: ${e.message}`);
+            const dirs2 = fs.readdirSync(dirPath1);
+            for (const dir2 of dirs2) {
+                const dirPath2 = path.join(dirPath1, dir2);
+                const match = dir2.match(/^(\d+)$/);
+                if (match) {
+                    const p1 = parseInt(match[1], 10);
+                    const filename = path.join(dirPath2, 'report.txt');
+                    if (fs.existsSync(filename)) {
+                        try {
+                            const data = fs.readFileSync(filename, 'utf8');
+
+                            const results = await parseAll(data, filename);
+                            table.push({
+                                p0,
+                                p1,
+                                ...results
+                            });
+                        } catch (e) {
+                            console.warn(`Abort at ${p0},${p1}: ${e.message}`);
+                        }
+                    }
                 }
             }
         }
     }
-    
+
     table.sort((left, right) => right.final - left.final);
     console.log(JSON.stringify(table, undefined, 2));
 })()

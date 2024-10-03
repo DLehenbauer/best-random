@@ -36,7 +36,7 @@ async function main() {
 
     const { ok, worrying, unusual, pMin, pSum, pMax } = table.reduce((stats, row) => {
         if (row.evaluation === 'ok') { stats.ok++; }
-        else if (row.evaluation.match(/worrying/i)) { stats.worrying++; }
+        else if (row.evaluation === "EXTREMELY Worrying and very unusual") { stats.worrying++; }
         else { stats.unusual++; }
 
         stats.pMin = Math.min(stats.pMin, row.p);
@@ -52,17 +52,35 @@ async function main() {
 
     table.sort((left, right) => right.passed - left.passed);
 
-    console.group("Best")
-    show(table.sort((left, right) => right.p - left.p));
-    console.groupEnd();
+    // console.group("Best")
+    // show(table.sort((left, right) => right.p - left.p));
+    // console.groupEnd();
     
     console.group("Best Worst")
     show(table.sort((left, right) => right.worst.p - left.worst.p));
     console.groupEnd();
 
-    console.group("Worst")
-    show(table.sort((left, right) => left.worst.p - right.worst.p));
-    console.groupEnd();    
+    // console.group("Worst")
+    // show(table.sort((left, right) => left.worst.p - right.worst.p));
+    // console.groupEnd();    
+
+    const worstTable = Object.entries(table.reduce((map, row) => {
+        const worst = row.worst;
+        const name  = worst.name ?? "current";
+        const stats = map[name] ?? { total: 0, failures: 0 };
+        stats.total++;
+        if (row.evaluation === "EXTREMELY Worrying and very unusual") {
+            stats.failures++;
+        }
+        map[name] = stats;
+        return map;
+    }, {})).map(([test, stats]) => (
+        { test, total: stats.total, failures: stats.failures, percent: `${percent(stats.failures / table.length)}%` }
+    )).sort((left, right) => right.failures - left.failures)
+
+    console.group("Weakness");
+    console.table(worstTable, ["test", "failures", "percent"]);
+    console.groupEnd();
 }
 
 main();

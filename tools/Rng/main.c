@@ -20,6 +20,23 @@ int parseArg(int argc, char* argv[], int i) {
     if (strcmp(arg, "-h") == 0)   { emitLo = false; return emitHi ? i : 0; }
     if (strcmp(arg, "-l") == 0)   { emitHi = false; return emitLo ? i : 0; }
     if (strcmp(arg, "-r") == 0)   { reverse = true; return i; }
+    if (strcmp(arg, "-i") == 0)   { 
+        printf("p0 = %d\n", p0);
+        printf("p1 = %d\n", p1);
+        printf("a0 = %d\n", get_index(p0, 0));
+        printf("b0 = %d\n", get_index(p0, 1));
+        printf("c0 = %d\n", get_index(p0, 2));
+        printf("d0 = %d\n", get_index(p0, 3));
+        printf("e0 = %d\n", get_index(p0, 4));
+        printf("f0 = %d\n", get_index(p0, 5));
+        printf("a1 = %d\n", get_index(p1, 0));
+        printf("b1 = %d\n", get_index(p1, 1));
+        printf("c1 = %d\n", get_index(p1, 2));
+        printf("d1 = %d\n", get_index(p1, 3));
+        printf("e1 = %d\n", get_index(p1, 4));
+        printf("f1 = %d\n", get_index(p1, 5));
+        return 0;
+    }
 
     if (i >= argc) { return 0; }
 
@@ -57,6 +74,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "    -h = high 32bits only\n");
             fprintf(stderr, "    -l = low 32bits only\n");
             fprintf(stderr, "    -r = reverse bits\n");
+            fprintf(stderr, "    -i = info\n");
             return 1;
         }
     }
