@@ -109,3 +109,7 @@ Notes:
 | a >> 29 |  0..7 |
 | a >> 30 |  0..3 |
 | a >> 31 |  0..1 |
+
+# Papers
+
+* [A Fast Hardware Pseudorandom Number Generator Based on the xoroshiro128 LFSR](https://arxiv.org/pdf/2203.04058v1)
