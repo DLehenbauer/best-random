@@ -1,5 +1,6 @@
 const assert = require("assert").strict;
 const fs = require('fs');
+const path = require('path');
 
 async function parseAll(data, filename) {
     const configExp = /^\*{5} MCP version ([^ ]+) ([^ ]+) \*{5}$/gm;
@@ -134,10 +135,17 @@ async function parseMod3(data, filename) {
     console.clear();
 
     let table = [];
-    let p0 = 0, p1 = 0;
-    for (p0 = 0; p0 < 32; p0++) {
-        for (p1 = 0; p1 < 32; p1++) {
-            const filename = `./logs/${p0}-${p1}/report.txt`;
+
+    const logsDir = "./logs";
+    const directories = fs.readdirSync(logsDir);
+
+    for (const dir of directories) {
+        const dirPath = path.join(logsDir, dir);
+        const match = dir.match(/^(\d+)-(\d+)$/);
+        if (match) {
+            const p0 = parseInt(match[1], 10);
+            const p1 = parseInt(match[2], 10);
+            const filename = path.join(dirPath, 'report.txt');
             if (fs.existsSync(filename)) {
                 try {
                     const data = fs.readFileSync(filename, 'utf8');
@@ -154,7 +162,7 @@ async function parseMod3(data, filename) {
             }
         }
     }
-
+    
     table.sort((left, right) => right.final - left.final);
     console.log(JSON.stringify(table, undefined, 2));
 })()
