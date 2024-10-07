@@ -47,22 +47,22 @@ async function main() {
     }, { ok: 0, worrying: 0, unusual: 0, pMin: +Infinity, pSum: 0, pMax: -Infinity });
 
     console.clear();
-    console.log(`completed: ${table.length}/${total} (${table[0].size})   ok: ${ok} (${percent(ok / table.length)}%)   unusual: ${unusual} (${percent(unusual / table.length)}%)   worrying: ${worrying} (${percent(worrying / table.length)}%)`);
+    console.log(`completed: ${table.length}/${total} (${percent(table.length/total)}%)   ok: ${ok} (${percent(ok / table.length)}%)   unusual: ${unusual} (${percent(unusual / table.length)}%)   worrying: ${worrying} (${percent(worrying / table.length)}%)`);
     console.log(`  pMin: ${pMin}   pAvg: ${float(pSum / table.length)}   pMax: ${pMax}\n`);
 
     table.sort((left, right) => right.passed - left.passed);
 
-    // console.group("Best")
+    // console.group("Best");
     // show(table.sort((left, right) => right.p - left.p));
     // console.groupEnd();
     
-    console.group("Best Worst")
+    console.group("Best Worst");
     show(table.sort((left, right) => right.worst.p - left.worst.p));
     console.groupEnd();
 
-    // console.group("Worst")
+    // console.group("Worst");
     // show(table.sort((left, right) => left.worst.p - right.worst.p));
-    // console.groupEnd();    
+    // console.groupEnd();
 
     const worstTable = Object.entries(table.reduce((map, row) => {
         const worst = row.worst;
