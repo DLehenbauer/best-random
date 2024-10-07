@@ -14,10 +14,8 @@ bins=(
 )
 
 rm_logs () {
-    echo ""
     echo "[$(date '+%m/%d %T')]: Removing '$logDir'..."
-    time find $logDir -delete
-    echo ""
+    find $logDir -delete
 }
 
 test_core () {
@@ -58,7 +56,7 @@ test_bin () {
     sizeBytes=$3
     reportArg="> '$logDir/{1}/{2}/report.txt'"
 
-    test_core $bin $sizeName $sizeBytes $reportArg
+    test_core $bin $sizeName $sizeBytes "$reportArg"
 }
 
 test_bins () {
@@ -108,6 +106,7 @@ size_tera=1099511627776
 size_ten_tera=10995116277760
 
 reset_args
+
 echo "[$(date '+%m/%d %T')]: Begin"
 
 test_bins tiny $size_tiny && \
