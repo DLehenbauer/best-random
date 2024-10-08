@@ -1,6 +1,4 @@
 #!/bin/bash
-rm ../../tools/Rng/rng
-npm run make:rng:rng
 
 logDir=$PWD/logs
 argsFile=$PWD/args
@@ -33,8 +31,7 @@ test_core () {
     start=`date`
     
     cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL $bin $sizeBytes $reportArg" \
-        && node p.js > $reportFile \
-        && cat $reportFile | node f.js > $argsFile
+        && node pf.js > $argsFile
 
     exit_code=$?
 
@@ -77,7 +74,10 @@ test_all () {
     test_core $bin $sizeName $sizeBytes $reportArg
 }
 
-reset_args () {
+reset () {
+    rm ../../tools/Rng/rng
+    npm run make:rng:rng
+
     rm_logs
 
     echo "[$(date '+%m/%d %T')]: Removing '$argsFile'..."
@@ -105,7 +105,7 @@ size_huge=107374182400
 size_tera=1099511627776
 size_ten_tera=10995116277760
 
-reset_args
+# reset
 
 echo "[$(date '+%m/%d %T')]: Begin"
 
