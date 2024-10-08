@@ -48,7 +48,7 @@ test_core () {
 }
 
 test_bin () {
-    bin=$1
+    bin="./bin/$1"
     sizeName=$2
     sizeBytes=$3
     reportArg="> '$logDir/{1}/{2}/report.txt'"
@@ -71,7 +71,7 @@ test_all () {
     sizeBytes=$2
     reportArg="-d '$logDir/{1}/{2}' > /dev/null"
 
-    test_core $bin $sizeName $sizeBytes $reportArg
+    test_core $bin $sizeName $sizeBytes "$reportArg"
 }
 
 reset () {
@@ -109,17 +109,14 @@ size_ten_tera=10995116277760
 
 echo "[$(date '+%m/%d %T')]: Begin"
 
-test_bins tiny $size_tiny && \
-test_bins small $size_small && \
-test_bins standard $size_standard && \
-test_all small $size_small && \
-test_bins big $size_big && \
-test_all standard $size_standard && \
-test_bins huge $size_huge && \
+test_bin "rda" tiny $size_tiny && \
+test_bin "mod3" tiny $size_tiny && \
+test_bin "mod3" small $size_small && \
+test_bin "mod3" standard $size_standard && \
+test_bin "lownda" standard $size_standard && \
+test_bin "z9" standard $size_standard && \
 test_all big $size_big && \
-test_bins tera $size_tera && \
 test_all huge $size_huge && \
-test_bins ten-tera $size_ten_tera && \
 test_all tera $size_tera && \
 test_all ten-tera $size_ten_tera
 
