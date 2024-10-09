@@ -115,7 +115,9 @@ test_bin "mod3" small $size_small && \
 test_bin "mod3" standard $size_standard && \
 test_bin "lownda" standard $size_standard && \
 test_bin "z9" standard $size_standard && \
-test_all big $size_big && \
+test_bin "mod3" big $size_big && \
+test_bin "rda" big $size_big && \
+test_bin "z9" big $size_big && \
 test_all huge $size_huge && \
 test_all tera $size_tera && \
 test_all ten-tera $size_ten_tera
