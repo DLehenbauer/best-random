@@ -1,2 +1,5 @@
 /logs/
-args
+/args
+/args.bak
+/pass
+/pass.bak

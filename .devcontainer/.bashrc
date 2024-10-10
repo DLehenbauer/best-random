@@ -9,8 +9,8 @@ export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\
 export LS_OPTIONS='--color=auto'
 eval "`dircolors -b`"
 alias ls='ls $LS_OPTIONS'
-alias ll='ls $LS_OPTIONS -l'
-alias l='ls $LS_OPTIONS -lA'
+alias ll='ls $LS_OPTIONS -lh'
+alias l='ls $LS_OPTIONS -lhA'
 
 # Some more alias to avoid making mistakes:
 alias rm='rm -i'

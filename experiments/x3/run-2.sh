@@ -2,6 +2,9 @@
 
 logDir=$PWD/logs
 argsFile=$PWD/args
+passFile=$PWD/pass
+filterScript=$PWD/f2.js
+
 workDir="../../tools/GJRand/src/gjrand.4.3.0.0/testunif/"
 rng="../../../../Rng/rng"
 bins=(
@@ -11,16 +14,14 @@ bins=(
     "./bin/z9"
 )
 
-rm_logs () {
-    echo "[$(date '+%m/%d %T')]: Removing '$logDir'..."
-    find $logDir -delete
-}
-
 test_core () {
     bin=$1
     sizeName=$2
     sizeBytes=$3
     reportArg=$4
+
+    echo "[$(date '+%m/%d %T')]: Removing '$logDir'..."
+    find $logDir -delete
 
     testName=$(basename ${bin})
 
@@ -30,8 +31,14 @@ test_core () {
     
     start=`date`
     
-    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL $bin $sizeBytes $reportArg" \
-        && node pf.js > $argsFile
+    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null && rm -rf '$logDir/{1}/{2}'" \
+        && cp $argsFile $argFiles.bak \
+        && cp $passFile $passFile.bak \
+        && cp $passFile $argsFile \
+        && rm $passFile
+
+    # cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL $bin $sizeBytes $reportArg" \
+    #    && node pf.js > $argsFile
 
     exit_code=$?
 
@@ -78,7 +85,8 @@ reset () {
     rm ../../tools/Rng/rng
     npm run make:rng:rng
 
-    rm_logs
+    echo "[$(date '+%m/%d %T')]: Removing '$passFile'..."
+    rm -f $passFile
 
     echo "[$(date '+%m/%d %T')]: Removing '$argsFile'..."
     rm -f $argsFile
@@ -105,11 +113,12 @@ size_huge=107374182400
 size_tera=1099511627776
 size_ten_tera=10995116277760
 
+rm $passFile
 # reset
 
 echo "[$(date '+%m/%d %T')]: Begin"
 
-test_bin "rda" tiny $size_tiny && \
+# test_bin "rda" tiny $size_tiny && \
 test_bin "mod3" tiny $size_tiny && \
 test_bin "mod3" small $size_small && \
 test_bin "mod3" standard $size_standard && \
