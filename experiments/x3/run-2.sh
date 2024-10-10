@@ -109,7 +109,7 @@ size_ten_tera=10995116277760
 
 echo "[$(date '+%m/%d %T')]: Begin"
 
-test_bin "rda" tiny $size_tiny && \
+# test_bin "rda" tiny $size_tiny && \
 test_bin "mod3" tiny $size_tiny && \
 test_bin "mod3" small $size_small && \
 test_bin "mod3" standard $size_standard && \
