@@ -74,9 +74,9 @@ reset () {
     rm -f $argsFile
     
     echo "[$(date '+%m/%d %T')]: Building '$argsFile'..."
-    for ((i = 0; i < 4096; i += 199));
+    for ((i = 0; i < 4096; i += 1));
     do
-        for ((j = 0; j < 4096; j += 211));
+        for ((j = 0; j < 4096; j += 1));
         do
             echo "$i $j" >> $argsFile
         done
@@ -103,12 +103,11 @@ test "mod3" $size_big && \
 test "z9" $size_big && \
 test "pmcp" $size_huge && \
 test "pmcp" $size_tera && \
-test "pmcp" $size_tera && \
 test "pmcp" $size_ten_tera
 
 echo "[$(date '+%m/%d %T')]: End"
 
-reset
-cp $argsFile.bak $argsFile && test "mcp" $size_standard
-reset
-cp $argsFile.bak $argsFile && test "pmcp" $size_standard
+# reset
+# cp $argsFile.bak $argsFile && test "mcp" $size_standard
+# reset
+# cp $argsFile.bak $argsFile && test "pmcp" $size_standard
