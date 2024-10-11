@@ -151,20 +151,23 @@ async function parseMod3(data, filename) {
                 const match = dir2.match(/^(\d+)$/);
                 if (match) {
                     const p1 = parseInt(match[1], 10);
-                    const filename = path.join(dirPath2, 'report.txt');
-                    if (fs.existsSync(filename)) {
-                        try {
-                            const data = fs.readFileSync(filename, 'utf8');
+                    let logFile = path.join(dirPath2, 'report.txt');
 
-                            const results = await parseAll(data, filename);
-                            table.push({
-                                p0,
-                                p1,
-                                ...results
-                            });
-                        } catch (e) {
-                            console.warn(`Abort at ${p0},${p1}: ${e.message}`);
-                        }
+                    if (!fs.existsSync(logFile)) {
+                        logFile = path.join(dirPath2, 'preport.txt');
+                    }
+
+                    try {
+                        const data = fs.readFileSync(logFile, 'utf8');
+
+                        const results = await parseAll(data, logFile);
+                        table.push({
+                            p0,
+                            p1,
+                            ...results
+                        });
+                    } catch (e) {
+                        console.warn(`Abort at ${p0},${p1}: ${e.message}`);
                     }
                 }
             }

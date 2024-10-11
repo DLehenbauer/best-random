@@ -99,13 +99,12 @@ test "mod3" $size_tiny && \
 test "mod3" $size_small && \
 test "mod3" $size_standard && \
 test "z9" $size_standard && \
-# test "mod3" $size_big && \
-# test "z9" $size_big && \
-# test "mod3" $size_huge && \
-# test "z9" $size_huge && \
-# test "mod3" $size_tera && \
-# test "z9" $size_tera && \
-# test "mcp" $size_ten_tera
+test "mod3" $size_big && \
+test "z9" $size_big && \
+test "pmcp" $size_huge && \
+test "pmcp" $size_tera && \
+test "pmcp" $size_tera && \
+test "pmcp" $size_ten_tera
 
 echo "[$(date '+%m/%d %T')]: End"
 
