@@ -132,11 +132,15 @@ const logDir = args.shift();
 const p0 = parseInt(args.shift(), 10);
 const p1 = parseInt(args.shift(), 10);
 
-const filename = path.join(logDir, path.join(`${p0}`, path.join(`${p1}`, 'report.txt')));
+const logFileParent = path.join(logDir, path.join(`${p0}`, `${p1}`));
+let logFile = path.join(logFileParent, 'report.txt')
+if (!fs.existsSync(logFile)) {
+    logFile = path.join(logFileParent, 'preport.txt')
+}
 
 try {
-    const data = fs.readFileSync(filename, 'utf8');
-    const results = parseAll(data, filename);
+    const data = fs.readFileSync(logFile, 'utf8');
+    const results = parseAll(data, logFile);
 
     if (results.evaluation !== "EXTREMELY Worrying and very unusual") {
         console.log(`${p0} ${p1}`);

@@ -7,12 +7,6 @@ filterScript=$PWD/f2.js
 
 workDir="../../tools/GJRand/src/gjrand.4.3.0.0/testunif/"
 rng="../../../../Rng/rng"
-bins=(
-    "./bin/rda"
-    "./bin/mod3"
-    "./bin/lownda"
-    "./bin/z9"
-)
 
 test_core () {
     bin=$1
@@ -23,22 +17,21 @@ test_core () {
     echo "[$(date '+%m/%d %T')]: Removing '$logDir'..."
     find $logDir -delete
 
+    touch pass
+
     testName=$(basename ${bin})
 
     reportFile=report-$testName-$sizeName.json
 
-    echo -n "[$(date '+%m/%d %T')]: $testName: $sizeName $(cat $argsFile | wc --lines) "
+    echo -n "[$(date '+%m/%d %T')]: $testName ($sizeName) : $(cat $argsFile | wc --lines) "
     
     start=`date`
     
-    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null && rm -rf '$logDir/{1}/{2}'" \
-        && cp $argsFile $argFiles.bak \
-        && cp $passFile $passFile.bak \
-        && cp $passFile $argsFile \
-        && rm $passFile
-
-    # cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL $bin $sizeBytes $reportArg" \
-    #    && node pf.js > $argsFile
+    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -o0 -e0 $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null" \
+       && cp $argsFile $argsFile.bak \
+       && cp $passFile $passFile.bak \
+       && cp $passFile $argsFile \
+       && rm $passFile
 
     exit_code=$?
 
@@ -50,33 +43,19 @@ test_core () {
     stop=`date`
     elapsed=`date -ud@$(($(date -ud"$stop" +%s)-$(date -ud"$start" +%s))) +%T`
     echo "-> $(cat $argsFile | wc --lines) ($elapsed)"
-
-    rm_logs
 }
 
-test_bin () {
-    bin="./bin/$1"
+test () {
     sizeName=$2
     sizeBytes=$3
-    reportArg="> '$logDir/{1}/{2}/report.txt'"
 
-    test_core $bin $sizeName $sizeBytes "$reportArg"
-}
-
-test_bins () {
-    sizeName=$1
-    sizeBytes=$2
-
-    for bin in "${bins[@]}"; do
-        test_bin $bin $sizeName $sizeBytes
-    done
-}
-
-test_all () {
-    bin="./mcp"
-    sizeName=$1
-    sizeBytes=$2
-    reportArg="-d '$logDir/{1}/{2}' > /dev/null"
+    if [[ "$1" == "mcp" || "$1" == "pmcp" ]]; then
+        bin="./$1"
+        reportArg="-d '$logDir/{1}/{2}' > /dev/null"
+    else
+        bin="./bin/$1"
+        reportArg="> '$logDir/{1}/{2}/report.txt'"
+    fi
 
     test_core $bin $sizeName $sizeBytes "$reportArg"
 }
@@ -85,50 +64,52 @@ reset () {
     rm ../../tools/Rng/rng
     npm run make:rng:rng
 
+    echo "[$(date '+%m/%d %T')]: Removing 'report-*.json'..."
+    rm -f report-*.json
+    
     echo "[$(date '+%m/%d %T')]: Removing '$passFile'..."
     rm -f $passFile
 
     echo "[$(date '+%m/%d %T')]: Removing '$argsFile'..."
     rm -f $argsFile
     
-    echo "[$(date '+%m/%d %T')]: Removing 'report-*.json'..."
-    rm -f report-*.json
-    
     echo "[$(date '+%m/%d %T')]: Building '$argsFile'..."
-    for i in {0..4095}
+    for ((i = 0; i < 4096; i += 199));
     do
-        for j in {0..4095}
+        for ((j = 0; j < 4096; j += 211));
         do
             echo "$i $j" >> $argsFile
         done
     done
 }
 
-size_tiny=10485760
-size_small=104857600
-size_standard=1073741824
-size_big=10737418240
-size_standard=1073741824
-size_huge=107374182400
-size_tera=1099511627776
-size_ten_tera=10995116277760
+size_tiny="tiny 10485760"
+size_small="small 104857600"
+size_standard="standard 1073741824"
+size_big="big 10737418240"
+size_huge="huge 107374182400"
+size_tera="tera 1099511627776"
+size_ten_tera="ten-tera 10995116277760"
 
-rm $passFile
-# reset
+reset
 
 echo "[$(date '+%m/%d %T')]: Begin"
 
-# test_bin "rda" tiny $size_tiny && \
-test_bin "mod3" tiny $size_tiny && \
-test_bin "mod3" small $size_small && \
-test_bin "mod3" standard $size_standard && \
-test_bin "lownda" standard $size_standard && \
-test_bin "z9" standard $size_standard && \
-test_bin "mod3" big $size_big && \
-test_bin "rda" big $size_big && \
-test_bin "z9" big $size_big && \
-test_all huge $size_huge && \
-test_all tera $size_tera && \
-test_all ten-tera $size_ten_tera
+test "mod3" $size_tiny && \
+test "mod3" $size_small && \
+test "mod3" $size_standard && \
+test "z9" $size_standard && \
+# test "mod3" $size_big && \
+# test "z9" $size_big && \
+# test "mod3" $size_huge && \
+# test "z9" $size_huge && \
+# test "mod3" $size_tera && \
+# test "z9" $size_tera && \
+# test "mcp" $size_ten_tera
 
 echo "[$(date '+%m/%d %T')]: End"
+
+reset
+cp $argsFile.bak $argsFile && test "mcp" $size_standard
+reset
+cp $argsFile.bak $argsFile && test "pmcp" $size_standard
