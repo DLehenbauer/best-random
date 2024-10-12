@@ -13,6 +13,7 @@ fetchSrc:
 	cd adaptive && \
 	wget http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/ADAPTIVE/adaptive_crush.zip && \
 	unzip adaptive_crush.zip && \
+	cd .. && \
 	patch adaptive/adaptive_crush.c < adaptive_crush.c.patch
 
 stdin:
