@@ -27,10 +27,10 @@ test_core () {
     
     start=`date`
     
-    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -o0 -e0 $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null" \
+    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -o0 -e0 $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null && rm -rf '$logDir/{1}/{2}'" \
        && cp $argsFile $argsFile.bak \
        && cp $passFile $passFile.bak \
-       && cp $passFile $argsFile \
+       && cat $passFile | sort -g | uniq > $argsFile \
        && rm $passFile
 
     exit_code=$?
@@ -91,12 +91,12 @@ size_huge="huge 107374182400"
 size_tera="tera 1099511627776"
 size_ten_tera="ten-tera 10995116277760"
 
-reset
+#reset
 
 echo "[$(date '+%m/%d %T')]: Begin"
 
-test "mod3" $size_tiny && \
-test "mod3" $size_small && \
+#test "mod3" $size_tiny && \
+#test "mod3" $size_small && \
 test "mod3" $size_standard && \
 test "z9" $size_standard && \
 test "mod3" $size_big && \
