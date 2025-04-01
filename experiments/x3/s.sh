@@ -2,7 +2,7 @@
 
 update () {
     lastPassed=$(tail -n 1 pass)
-    processed=$(grep -n "^$lastPassed$" args | cut -d : -f 1)
+    processed=$(grep -n "^$lastPassed$" pass.bak | cut -d : -f 1)
     passed=$(cat pass | wc -l)
     rejected=$(echo "scale=2; $processed - $passed" | bc)
     percent=$(echo "scale=2; 100 - ($passed * 100) / $processed" | bc)
