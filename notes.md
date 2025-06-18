@@ -113,3 +113,4 @@ Notes:
 # Papers
 
 * [A Fast Hardware Pseudorandom Number Generator Based on the xoroshiro128 LFSR](https://arxiv.org/pdf/2203.04058v1)
+* [Middle-Square Weyl Sequence RNG](https://arxiv.org/pdf/1704.00358)
