@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Define the path to the 'pass' file
-const filePath = path.join(__dirname, 'pass.bak');
+const filePath = path.join(__dirname, 'pass');
 
 // Read the file asynchronously
 fs.readFile(filePath, 'utf8', (err, data) => {
