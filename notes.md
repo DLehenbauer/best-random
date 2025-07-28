@@ -115,3 +115,5 @@ Notes:
 * [A Fast Hardware Pseudorandom Number Generator Based on the xoroshiro128 LFSR](https://arxiv.org/pdf/2203.04058v1)
 * [Middle-Square Weyl Sequence RNG](https://arxiv.org/pdf/1704.00358)
 * [SHISHUA: The Fastest Pseudo-Random Generator In the World](https://espadrine.github.io/blog/posts/shishua-the-fastest-prng-in-the-world.html)
+* [Some Uniform and Normal Random Number Generators](https://maths-people.anu.edu.au/brent/random.html)
+
