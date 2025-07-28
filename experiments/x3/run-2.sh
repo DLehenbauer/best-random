@@ -13,6 +13,7 @@ test_core () {
     sizeName=$2
     sizeBytes=$3
     reportArg=$4
+    cleanupAfter=${5:-true}  # Optional 5th parameter, defaults to true
 
     echo "[$(date '+%m/%d %T')]: Removing '$logDir'..."
     find $logDir -delete
@@ -27,7 +28,14 @@ test_core () {
     
     start=`date`
     
-    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -o0 -e0 $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null && rm -rf '$logDir/{1}/{2}'" \
+    # Build the parallel command with optional cleanup
+    if [ "$cleanupAfter" = "true" ]; then
+        cleanupCmd="&& rm -rf '$logDir/{1}/{2}'"
+    else
+        cleanupCmd=""
+    fi
+    
+    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -o0 -e0 $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null $cleanupCmd" \
        && cp $argsFile $argsFile.bak \
        && cp $passFile $passFile.bak \
        && cat $passFile | sort -g | uniq > $argsFile \
@@ -48,6 +56,7 @@ test_core () {
 test () {
     sizeName=$2
     sizeBytes=$3
+    cleanupAfter=${4:-true}  # Optional 4th parameter, defaults to true
 
     if [[ "$1" == "mcp" || "$1" == "pmcp" ]]; then
         bin="./$1"
@@ -57,7 +66,7 @@ test () {
         reportArg="> '$logDir/{1}/{2}/report.txt'"
     fi
 
-    test_core $bin $sizeName $sizeBytes "$reportArg"
+    test_core $bin $sizeName $sizeBytes "$reportArg" $cleanupAfter
 }
 
 reset () {
@@ -100,16 +109,10 @@ echo "[$(date '+%m/%d %T')]: Begin"
 #test "mod3" $size_standard && \
 #test "z9" $size_standard && \
 #test "mod3" $size_big && \
+#test "lownda" $size_big && \
 #test "z9" $size_big && \
-test "mod3" $size_huge && \
-test "z9" $size_huge && \
-test "mod3" $size_tera && \
-test "z9" $size_tera && \
-test "pmcp" $size_ten_tera
+#test "mod3" $size_huge
+
+test "lownda" $size_huge
 
 echo "[$(date '+%m/%d %T')]: End"
-
-# reset
-# cp $argsFile.bak $argsFile && test "mcp" $size_standard
-# reset
-# cp $argsFile.bak $argsFile && test "pmcp" $size_standard

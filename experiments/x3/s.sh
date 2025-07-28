@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Note that pass and pass.bak are only approximately sorted, so negative/inaccurate results
+# are possible (most noticeable early in the run).
+
 update () {
     previous_args_file="pass.bak"
 
