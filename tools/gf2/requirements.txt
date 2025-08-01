@@ -1,3 +1,2 @@
 numpy>=1.21.0
-galois>=0.3.0
-sympy>=1.9.0
+python-flint>=0.5.0

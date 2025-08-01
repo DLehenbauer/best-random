@@ -18,14 +18,6 @@ import logging
 import time
 from dataclasses import dataclass
 
-def _u32(value: int) -> int:
-    """Apply 32-bit unsigned integer mask."""
-    return value & 0xFFFFFFFF
-
-def _u64(value: int) -> int:
-    """Apply 64-bit unsigned integer mask."""
-    return value & 0xFFFFFFFFFFFFFFFF
-
 @dataclass
 class SearchResult:
     period: int
@@ -39,7 +31,7 @@ class XorshiftAnalyzer:
     Analyzer for xorshift generators to find coefficients that produce maximal period.
     
     This class can handle state arrays of any length and state elements that are
-    32-bit or 64-bit unsigned integers.
+    any power-of-2 bit width (1, 2, 4, 8, 16, 32, 64, 128, etc.).
     """
     
     def __init__(self, state_size: int, bit_width: int = 32):
@@ -48,8 +40,12 @@ class XorshiftAnalyzer:
         
         Args:
             state_size: Number of elements in the state array
-            bit_width: Bit width of each state element (32 or 64)
+            bit_width: Bit width of each state element (must be a power of 2)
         """
+        # Validate that bit_width is a power of 2
+        if bit_width <= 0 or (bit_width & (bit_width - 1)) != 0:
+            raise ValueError(f"bit_width must be a positive power of 2, got {bit_width}")
+        
         self.state_size = state_size
         self.bit_width = bit_width
         self.total_bits = state_size * bit_width
@@ -63,14 +59,19 @@ class XorshiftAnalyzer:
                           format='%(asctime)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger(__name__)
     
-    def _mask_value(self, value: int) -> int:
-        """Apply appropriate bit mask based on bit width."""
-        if self.bit_width == 32:
-            return _u32(value)
-        elif self.bit_width == 64:
-            return _u64(value)
-        else:
-            return value & self.max_value
+    def _u(self, value: int) -> int:
+        """
+        Apply appropriate bit mask based on bit width.
+        
+        Works with any power-of-2 bit width by using the precomputed max_value mask.
+        
+        Args:
+            value: Integer value to mask
+            
+        Returns:
+            Masked value within the bit width range
+        """
+        return value & self.max_value
     
     def state_to_bits(self, state: List[int]) -> np.ndarray:
         """
@@ -254,7 +255,7 @@ class XorshiftAnalyzer:
         return -1  # Unable to determine period efficiently
     
     
-    def validate_known_generator(self, next_state_func: Callable[[List[int]], List[int]]) -> SearchResult:
+    def check(self, next_state_func: Callable[[List[int]], List[int]]) -> SearchResult:
         """
         Validate a known generator function.
         
@@ -288,21 +289,21 @@ class XorshiftAnalyzer:
         )
 
 def main():
+    # Analyze the generator
+    a = XorshiftAnalyzer(state_size=1, bit_width=32)
+    
     def next_state(state: List[int]) -> List[int]:
         """Your specific next_state function from the task description."""
         t = state[0]
         
-        t ^= _u32(t << 13)
-        t ^= _u32(t >> 17)
-        t ^= _u32(t << 5)
+        t ^= a._u(t << 13)
+        t ^= a._u(t >> 17)
+        t ^= a._u(t << 5)
 
-        return [_u32(t)]
-    
-    # Analyze the generator
-    analyzer = XorshiftAnalyzer(state_size=1, bit_width=32)
+        return [a._u(t)]
     
     print("Analyzing your xorshift generator...")
-    result = analyzer.validate_known_generator(next_state)
+    result = a.check(next_state)
     
     print(f"\nGenerator Analysis Results:")
     print(f"  Polynomial: {result.polynomial}")
