@@ -10,8 +10,9 @@ Author: Generated for best-random project
 """
 
 import numpy as np
+import flint
+from flint import nmod_mat, nmod_poly
 import galois
-import sympy as sp
 from typing import List, Callable, Tuple, Optional, Dict, Any
 import itertools
 import logging
@@ -51,7 +52,7 @@ class XorshiftAnalyzer:
         self.total_bits = state_size * bit_width
         self.max_value = (1 << bit_width) - 1
         
-        # Initialize Galois field GF(2)
+        # Initialize Galois field GF(2) for polynomial operations
         self.GF2 = galois.GF(2)
         
         # Setup logging
@@ -166,19 +167,36 @@ class XorshiftAnalyzer:
     
     def get_characteristic_polynomial(self, matrix: np.ndarray) -> galois.Poly:
         """
-        Get the characteristic polynomial of the matrix.
+        Get the characteristic polynomial of the matrix using FLINT for acceleration.
         
         Args:
             matrix: Characteristic matrix in GF(2)
             
         Returns:
-            Characteristic polynomial
+            Characteristic polynomial converted to galois.Poly for compatibility
         """
-        print("Computing characteristic polynomial...")
+        print("Computing characteristic polynomial using FLINT...")
         start_time = time.time()
         
-        # Compute characteristic polynomial: det(xI - A)
-        poly = matrix.characteristic_poly()
+        # Convert galois matrix to FLINT nmod_mat for faster computation
+        flint_matrix = nmod_mat(self.total_bits, self.total_bits, 2)
+        
+        # Copy data from galois matrix to FLINT matrix
+        for i in range(self.total_bits):
+            for j in range(self.total_bits):
+                flint_matrix[i, j] = int(matrix[i, j])
+        
+        # Compute characteristic polynomial using FLINT (much faster)
+        flint_poly = flint_matrix.charpoly()
+        
+        # Convert FLINT polynomial back to galois polynomial for compatibility
+        # Extract coefficients from FLINT polynomial
+        coeffs = []
+        for i in range(flint_poly.degree() + 1):
+            coeffs.append(flint_poly[i])
+        
+        # Create galois polynomial from coefficients
+        galois_poly = galois.Poly(coeffs, field=self.GF2)
         
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -186,9 +204,10 @@ class XorshiftAnalyzer:
         
         # Print the characteristic polynomial
         print(f"\nCharacteristic Polynomial:")
-        print(f"  {poly}")
+        print(f"  {galois_poly}")
+        print(f"  Degree: {galois_poly.degree}")
         
-        return poly
+        return galois_poly
     
     def is_irreducible_polynomial(self, poly: galois.Poly) -> bool:
         """
