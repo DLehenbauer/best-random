@@ -9,3 +9,5 @@ tools/RNG_Test.exe
 
 /*.log
 tools/p.sh
+tools/gf2/venv
+tools/gf2/__pycache__
