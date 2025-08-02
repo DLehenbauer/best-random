@@ -13,16 +13,13 @@ import numpy as np
 from flint import nmod_mat
 import galois
 from typing import List, Callable
-import itertools
 import logging
-import time
 from dataclasses import dataclass
 
 @dataclass
 class SearchResult:
     period: int
     polynomial: str
-    state_size: int
 
 class XorshiftAnalyzer:
     """
@@ -58,6 +55,16 @@ class XorshiftAnalyzer:
                           format='%(asctime)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger(__name__)
     
+    def shl(self, value: int, shift: int) -> int:
+        return self.u(value << shift)
+
+    def shr(self, value: int, shift: int) -> int:
+        return value >> shift
+
+    def rol(self, value: int, shift: int) -> int:
+        shift &= (self.bit_width - 1)
+        return self.shl(value, shift) | self.shr(value, self.bit_width - shift)
+
     def u(self, value: int) -> int:
         """
         Apply appropriate bit mask based on bit width.
@@ -124,15 +131,10 @@ class XorshiftAnalyzer:
         Returns:
             Characteristic matrix in GF(2)
         """
-        self.logger.debug(f"Building {self.total_bits}x{self.total_bits} characteristic matrix...")
-        start_time = time.time()
-        
         matrix = np.zeros((self.total_bits, self.total_bits), dtype=int)
         
         # Test with each basis vector (single bit set)
         for i in range(self.total_bits):
-            self.logger.debug(f"  Progress: {i}/{self.total_bits} ({100*i//self.total_bits}%)")
-            
             # Create basis vector
             basis_bits = np.zeros(self.total_bits, dtype=int)
             basis_bits[i] = 1
@@ -143,24 +145,28 @@ class XorshiftAnalyzer:
             # Apply next_state function
             output_state = next_state_func(input_state)
             
+            # Validate output_state
+            if len(output_state) != self.state_size:
+                raise ValueError(f"next_state_func returned state with length {len(output_state)}, expected {self.state_size}")
+            
+            for j, element in enumerate(output_state):
+                if not isinstance(element, int):
+                    raise TypeError(f"output_state[{j}] is not an integer: {type(element)}")
+                if element != self.u(element):
+                    raise ValueError(f"output_state[{j}] = {element} does not fit in {self.bit_width} bits (should be {self.u(element)})")
+            
             # Convert back to bits and store as column in matrix
             output_bits = self.state_to_bits(output_state)
             matrix[:, i] = output_bits
 
         # Convert to GF(2) matrix
         gf2_matrix = self.GF2(matrix)
-
-        end_time = time.time()
-        total_time = end_time - start_time
-        
         
         # Print the matrix with full output (no truncation)
         self.logger.debug(f"\nCharacteristic Matrix ({self.total_bits}x{self.total_bits}):")
         if self.logger.isEnabledFor(logging.DEBUG):
             with np.printoptions(threshold=np.inf, linewidth=np.inf):
                 self.logger.debug(f"{gf2_matrix}")
-
-        self.logger.debug(f"Matrix construction complete in {total_time:.2f} seconds")
 
         return gf2_matrix
     
@@ -174,9 +180,7 @@ class XorshiftAnalyzer:
         Returns:
             Characteristic polynomial converted to galois.Poly for compatibility
         """
-        self.logger.debug("Computing characteristic polynomial using FLINT...")
-        start_time = time.time()
-        
+
         # Convert galois matrix to FLINT nmod_mat for faster computation
         flint_matrix = nmod_mat(self.total_bits, self.total_bits, 2)
         
@@ -196,11 +200,7 @@ class XorshiftAnalyzer:
         
         # Create galois polynomial from coefficients
         galois_poly = galois.Poly(coeffs, field=self.GF2)
-        
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        self.logger.debug(f"Characteristic polynomial computed in {elapsed_time:.2f} seconds")
-        
+                
         # Log the characteristic polynomial
         self.logger.debug(f"Characteristic Polynomial: {galois_poly}")
         self.logger.debug(f"Polynomial Degree: {galois_poly.degree}")
@@ -237,13 +237,10 @@ class XorshiftAnalyzer:
         self.logger.debug(f"Analyzing generator with {self.state_size}x{self.bit_width}-bit state...")
         
         matrix = self.build_characteristic_matrix(next_state_func)
-        poly = self.get_characteristic_polynomial(matrix)
-        
+        poly = self.get_characteristic_polynomial(matrix)        
         period = self.calculate_period(matrix)
-        self.logger.debug("Analysis complete!")
         
         return SearchResult(
             period=period,
-            polynomial=str(poly),
-            state_size=self.state_size
+            polynomial=str(poly)
         )

@@ -7,11 +7,11 @@ def test(c0: int, c1: int, c2: int):
     a = XorshiftAnalyzer(state_size=1, bit_width=8)
 
     def next_state_func(state):
-        x = state[0]
-        x ^= a.u(x << c0)
-        x ^= a.u(x >> c1)
-        x ^= a.u(x << c2)
-        return [a.u(x)]
+        t = state[0]
+        t ^= a.shr(t, c0)
+        t ^= a.shl(t, c1)
+        t ^= a.shr(t, c2)
+        return [a.u(t)]
     
     def check_period(initial_state):
         # Use the provided initial state

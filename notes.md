@@ -101,6 +101,17 @@ Notes:
 | 0x6d2b79f5 = 1831565813 = (7)(11)(859)(27691) | [Mulberry32](https://gist.github.com/tommyettinger/46a874533244883189143505d203312c) |
 |    0x587C5 =     362437 = (59)(6143)          | [xorwow](https://en.wikipedia.org/wiki/Xorshift#xorwow) |
 
+# Minimal Xorshift
+With n=64 bits, the pairs (7, 9) and (9, 7) produce a maximal period of 2^64-1.  The left/right shifts can also be reversed, resulting in 4 possible combinations.
+
+```
+uint64_t xorshift64(uint64_t x) {
+	x ^= x << 7;
+	x ^= x >> 9;
+	return x;
+}
+```
+
 # Permutations
 |  shift  | range |
 |---------|-------|
