@@ -6,12 +6,13 @@ from gf2 import XorshiftAnalyzer
 def test(c0: int, c1: int, c2: int):
     a = XorshiftAnalyzer(state_size=1, bit_width=8)
 
-    def next_state_func(state):
-        t = state[0]
+    def next_state_func(s):
+        t = s[0]
         t ^= a.shr(t, c0)
         t ^= a.shl(t, c1)
         t ^= a.shr(t, c2)
-        return [a.u(t)]
+        s[0] = t
+        return s
     
     def check_period(initial_state):
         # Use the provided initial state

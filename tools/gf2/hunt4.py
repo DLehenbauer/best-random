@@ -2,7 +2,7 @@
 
 from gf2 import XorshiftAnalyzer
 
-bit_width = 64
+bit_width = 32
 state_size = 2
 
 def test(c0: int, c1: int, c2: int):
@@ -10,11 +10,11 @@ def test(c0: int, c1: int, c2: int):
 
     def next_state_func(s):
         t = s[0]
-        s[0] = s[1]
+        t ^= a.shl(t, c0)
+        t ^= a.shr(t, c1)
+        t ^= a.shl(s[1], c2)
         
-        t ^= a.shr(t, c0)
-        t ^= a.shl(t, c1)
-        t ^= a.shr(t, c2)
+        s[0] = s[1]
         s[1] = t
 
         return s
