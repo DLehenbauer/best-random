@@ -1,7 +1,8 @@
-#include <stdlib.h>
 #include <stdint.h>
-#include <time.h>
+#include <stdlib.h>
 #include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
 
 static inline uint32_t rot32(uint32_t v, uint32_t k) { k &= 31; return (v << k) | (v >> (32 - k)); }
 static inline uint64_t rot64(uint64_t v, uint64_t k) { k &= 63; return (v << k) | (v >> (64 - k)); }
@@ -15,32 +16,44 @@ static inline uint32_t reverse32(uint32_t v)
     return rot32(v, 16);
 }
 
-static inline uint32_t us()
-{
-    struct timeval start;
-    gettimeofday(&start, NULL);
-    return start.tv_sec * 1000000 + start.tv_usec;
+// Adapted from SplitMix64:
+// (See: https://prng.di.unimi.it/splitmix64.c)
+static inline uint64_t mix64(uint64_t a, uint64_t b) {
+    a ^= b * 0x9e3779b97f4a7c15ULL;
+	a = (a ^ (a >> 30)) * 0xbf58476d1ce4e5b9ULL;
+	a = (a ^ (a >> 27)) * 0x94d049bb133111ebULL;
+	return a ^ (a >> 31);
 }
 
-static inline void init_seed(uint32_t seed) {
+static inline uint64_t us(void) 
+{
+    // Get the current time in microseconds since the epoch
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t)(tv.tv_sec * 1000000 + tv.tv_usec);
+}
+
+static uint64_t wyrand_state = 0x1234567890abcdefULL;
+
+static inline void init_seed(uint64_t seed) {
     if (seed == 0) {
-        seed = (unsigned) time(NULL);
-        seed ^= (intptr_t) &time;
-        seed += us();
+        seed = mix64(
+            mix64(
+                (uint64_t) time(NULL),          // Current time
+                (uint64_t) getpid()),           // Process ID
+            mix64(
+                (uint64_t)(uintptr_t) &seed,    // Address of seed
+                (uint64_t) us()));              // Microseconds since epoch
     }
 
-    srand(seed);
+    wyrand_state = seed;
 }
 
-static inline uint64_t seed()
-{
-    uint64_t x = rand();
-    
-    // RAND_MAX is implementation dependent, but guaranteed to be at least 15b (0x7fff)
-    for (int i = 0; i < 5; i++) {
-        x = rot64(x, 13);
-        x ^= rand();
-    }
-
-    return x + rand();
+static inline uint64_t seed(void) {
+    // See https://github.com/wangyi-fudan/wyhash
+    wyrand_state += 0x2d358dccaa6c78a5ull;
+    __uint128_t a = wyrand_state;
+    __uint128_t b = a ^ 0x8bb84b93962eacc9ull;
+    __uint128_t m = a * b;
+    return (m >> 64) ^ (uint64_t) m;
 }
