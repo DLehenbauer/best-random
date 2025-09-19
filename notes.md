@@ -1,4 +1,6 @@
-# Multipliers for LCGs with m=2<sup>32</sup>
+# Notes
+
+## Multipliers for LCGs with m=2<sup>32</sup>
 
 ### [Computationally Easy, Spectrally Good Multipliers for Congruential Pseudorandom Number Generators](https://labs.oracle.com/pls/apex/f?p=LABS:0:0:APPLICATION_PROCESS=GETDOC_INLINE:::DOC_ID:1360)
 
@@ -32,7 +34,7 @@
 | LP | 2 | 8 | 0x21d87225 =  567833125 = (5)(5)(5)(5)(908533)        | 0.769188 |
 | LP | 3 | 8 | 0x4b3d8901 = 1262323969 = (570413)(2213)              | 0.769184 |
 
-# Multipliers for MCGs with m=2<sup>32</sup>
+## Multipliers for MCGs with m=2<sup>32</sup>
 
 ### [Computationally Easy, Spectrally Good Multipliers for Congruential Pseudorandom Number Generators](https://labs.oracle.com/pls/apex/f?p=LABS:0:0:APPLICATION_PROCESS=GETDOC_INLINE:::DOC_ID:1360)
 
@@ -88,20 +90,20 @@ Notes:
 | 0x6c078965 = 1812433253 = (1289)(1406077)   | [Borosh-Niederreiter](https://www.gnu.org/software/gsl/doc/html/rng.html#c.gsl_rng_borosh13) |
 | 0xdeece66d = 3740067437 = (41)(163)(559639) | [Truncated POSIX rand48 LCG](https://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use)
 
-# 32b Galois LFSRs with maximum period
+## 32b Galois LFSRs with maximum period
 ```ts
 () => x = (x >>> 1) ^ (-(x & 1) & 0xd0000001);
 () => x = (x >>> 1) ^ (-(x & 1) & 0x80200003);
 ```
 
-# Weyl Sequence
+## Weyl Sequence
 | a | Source |
 |---|--------|
 | 0x9e3779b9 = 2654435769 = (3)(89)(523)(19009) | [Golden ratio](https://softwareengineering.stackexchange.com/questions/402542/where-do-magic-hashing-constants-like-0x9e3779b9-and-0x9e3779b1-come-from) |
 | 0x6d2b79f5 = 1831565813 = (7)(11)(859)(27691) | [Mulberry32](https://gist.github.com/tommyettinger/46a874533244883189143505d203312c) |
 |    0x587C5 =     362437 = (59)(6143)          | [xorwow](https://en.wikipedia.org/wiki/Xorshift#xorwow) |
 
-# Minimal Xorshift
+## Minimal Xorshift
 With n=64 bits, the pairs (7, 9) and (9, 7) produce a maximal period of 2^64-1.  The left/right shifts can also be reversed, resulting in 4 possible combinations.
 
 ```
@@ -112,7 +114,7 @@ uint64_t xorshift64(uint64_t x) {
 }
 ```
 
-# Permutations
+## Permutations
 |  shift  | range |
 |---------|-------|
 | a >> 27 | 0..31 |
@@ -121,10 +123,9 @@ uint64_t xorshift64(uint64_t x) {
 | a >> 30 |  0..3 |
 | a >> 31 |  0..1 |
 
-# References
+## References
 
 * [A Fast Hardware Pseudorandom Number Generator Based on the xoroshiro128 LFSR](https://arxiv.org/pdf/2203.04058v1)
 * [Middle-Square Weyl Sequence RNG](https://arxiv.org/pdf/1704.00358)
 * [SHISHUA: The Fastest Pseudo-Random Generator In the World](https://espadrine.github.io/blog/posts/shishua-the-fastest-prng-in-the-world.html)
 * [Some Uniform and Normal Random Number Generators](https://maths-people.anu.edu.au/brent/random.html)
-
