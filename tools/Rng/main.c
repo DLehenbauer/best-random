@@ -47,7 +47,7 @@ int parseArg(int argc, char* argv[], int i) {
     return 0;
 }
 
-static inline void write(uint32_t value) {
+static inline void out_u32(uint32_t value) {
     static uint32_t buffer[ELEMENT_COUNT];
     static int i = 0;
 
@@ -89,13 +89,13 @@ int main(int argc, char *argv[]) {
         if (emitLo) {
             value = raw;
             if (reverse) { value = reverse32(value); }
-            write(value);
+            out_u32(value);
         }
 
         if (emitHi) {
             value = raw >> 32;
             if (reverse) { value = reverse32(value); }
-            write(value);
+            out_u32(value);
         }
     }
 

@@ -5,8 +5,6 @@ XorShift Generator Coefficient Search Program
 This program searches for shift coefficients for xorshift generators that produce
 maximal period by testing that the characteristic polynomial is primitive and
 irreducible over GF(2).
-
-Author: Generated for best-random project
 """
 
 import numpy as np

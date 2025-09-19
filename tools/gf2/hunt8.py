@@ -9,13 +9,15 @@ def test(c0: int, c1: int, c2: int):
     a = XorshiftAnalyzer(state_size=state_size, bit_width=bit_width)
 
     def next_state_func(s):
-        t = s[0]
-        s[0] = s[1]
-        
-        t ^= a.shr(t, c0)
-        t ^= a.shl(t, c1)
-        t ^= a.shr(t, c2)
-        s[1] = t
+        x = s[0]
+        y = s[1]
+
+        x ^= a.shl(x, c0)
+        x ^= a.shr(x, c1)
+        x ^= y ^ a.shr(y, c2)
+
+        s[0] = y
+        s[1] = x
 
         return s
 
