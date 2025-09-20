@@ -629,7 +629,7 @@ static double low_pvalue = DBL_MIN;
 
 /* This is the call made when we want to print some analysis. This will be
    done multiple times if --progress is used. */
-static void analyze(int64_t pos, bool trans, bool final) {
+static double analyze(int64_t pos, bool trans, bool final) {
 
 	if (pos < 2 * pow(2.0/(1.0 - P), DIM)) printf("WARNING: p-values are unreliable, you have to wait (insufficient data for meaningful answer)\n");
 
@@ -639,12 +639,23 @@ static void analyze(int64_t pos, bool trans, bool final) {
 	printf("processed %.3g bytes in %.3g seconds (%.4g GB/s, %.4g TB/h). %s\n",
 		(double)pos, (double)(tm-tstart), pos * 1E-9 / (double)(tm-tstart), pos * (3600 * 1E-12) / (double)(tm-tstart), ctime(&tm));
 
+	double pc = fabs(pvalue - 0.5);
+	const char* n = "ok";
+	if (pc < 0.01) {
+		n = "EXTREMELY Worrying and very unusual";
+		if (pc > 1e-10) n += 10;
+		if (pc > 1e-8) n += 13;
+		if (pc > 1e-6) n += 5;
+	}
+
 	if (final) printf("final\n");
-	printf("p = %.3g\n", pvalue);
+	printf("p = %.3g (%s)\n", pvalue, n);
 
 	if (pvalue < low_pvalue) exit(0);
 	
 	if (!final) printf("------\n\n");
+
+	return pc;
 }
 
 static int64_t progsize[]=	{
@@ -686,7 +697,10 @@ static void run_test(const int64_t n, const bool trans, const bool progress) {
 		pos += next_batch_size * (HWD_BITS / 8);
 
 		if (progress && pos >= next_progr) {
-			analyze(pos, trans, false);
+			if (analyze(pos, trans, false) < 1e-20) {
+				break;
+			}
+
 			progsize[progr_index++] *= 10;
 			next_progr = progsize[progr_index];
 			if (next_progr == 0) {
