@@ -111,8 +111,9 @@ echo "[$(date '+%m/%d %T')]: Begin"
 #test "mod3" $size_big && \
 #test "lownda" $size_big && \
 #test "z9" $size_big && \
-#test "mod3" $size_huge
-
-test "lownda" $size_huge
+#test "mod3" $size_huge && \
+#test "lownda" $size_huge && \
+#test "mod3" $size_tera false && \
+test "lownda" $size_tera false 
 
 echo "[$(date '+%m/%d %T')]: End"
