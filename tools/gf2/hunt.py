@@ -36,8 +36,8 @@ def test(i, ops, c):
         c0 = c[0]
         c1 = c[1]
 
-        s[0] = o(o0, si0, c0) ^ o(o1, si1, c1)
-        s[1] = o(o0, si2, c0) ^ o(o1, si3, c1)
+        s[0] = si0 ^ o(o0, si1, c0)
+        s[1] = si2 ^ o(o1, si3, c1)
 
         return s
 
@@ -75,20 +75,9 @@ if __name__ == "__main__":
         print("Error: all op values must be in range 0..2.", file=sys.stderr)
         sys.exit(2)
 
-    # Validate c values per-op:
-    # - If the corresponding op is RSH (code 0) then c may be 0..bit_width
-    #   (a shift of `bit_width` represents removing the operand).
-    # - If the op is not RSH then c must be in 1..bit_width-1 (no zero
-    #   shifts allowed, and must be less than bit_width).
-    for idx, (op, cv) in enumerate(zip(ops, c)):
-        if op == 0:  # RSH
-            if not (0 <= cv <= bit_width):
-                print(f"Error: c{idx} must be in range 0..{bit_width} for RSH (op=0).", file=sys.stderr)
-                sys.exit(2)
-        else:
-            if not (1 <= cv < bit_width):
-                print(f"Error: c{idx} must be in range 1..{bit_width-1} for non-RSH ops (op={op}).", file=sys.stderr)
-                sys.exit(2)
+    if any(not (1 <= x < bit_width) for x in c):
+        print(f"Error: all c values must be in range 1..{bit_width-1}.", file=sys.stderr)
+        sys.exit(2)
 
     ok = test(i, ops, c)
     status = "OK" if ok else "NOT OK"

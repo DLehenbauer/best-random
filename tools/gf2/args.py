@@ -21,9 +21,11 @@ def main(out_path: str = OUT_PATH) -> int:
     total = 0
     with open(out_path, 'w', encoding='utf-8') as f:
         for i in itertools.product((0, 1), repeat=4):
-            # Skip configurations where all i values are identical (e.g. 0,0,0,0)
-            if len(set(i)) == 1:
-                print(f"Skipping i={i} due to identical i values", file=sys.stderr)
+            if i[0] == 0 and i[1] == 0:
+                print(f"Skipping i={i} because i[0] == i[1] (no feedback)", file=sys.stderr)
+                continue
+            if i[2] == 1 and i[3] == 1:
+                print(f"Skipping i={i} because i[2] == i[3] (no feedback)", file=sys.stderr)
                 continue
 
             # Iterate over Op enum members for clarity; convert to ints when
@@ -35,14 +37,9 @@ def main(out_path: str = OUT_PATH) -> int:
                     print(f"Skipping o=({o[0].name}, {o[1].name}) because all {o[0].name}", file=sys.stderr)
                     continue
 
-                # For each operation code:
-                # - Allow c to be `bit_width` only when the corresponding operation is
-                #   SHR (this represents removing the operand).
-                # - Allow c to be 0 only when the operation is SHR; otherwise start
-                #   the range at 1.
-                c0_range = range(bit_width + 1) if o[0] == Op.SHR else range(1, bit_width)
-                c1_range = range(bit_width + 1) if o[1] == Op.SHR else range(1, bit_width)
-                for c in itertools.product(c0_range, c1_range):
+                # For hunt.py we require both c0 and c1 to be in the range
+                # 1..bit_width-1.
+                for c in itertools.product(range(1, bit_width), repeat=2):
                     # write one combination per line; ensure ops are written as
                     # integers when emitting the args file
                     ops_as_ints = tuple(int(x) for x in o)
