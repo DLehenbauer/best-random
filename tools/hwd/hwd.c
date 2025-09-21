@@ -639,17 +639,18 @@ static double analyze(int64_t pos, bool trans, bool final) {
 	printf("processed %.3g bytes in %.3g seconds (%.4g GB/s, %.4g TB/h). %s\n",
 		(double)pos, (double)(tm-tstart), pos * 1E-9 / (double)(tm-tstart), pos * (3600 * 1E-12) / (double)(tm-tstart), ctime(&tm));
 
-	double pc = fabs(pvalue - 0.5);
-	const char* n = "ok";
+	// Compute one-sided confidence values from two-sided p-value:
+    double pc = (pvalue < 0.5 ? pvalue : 1.0 - pvalue) * 2.0;
+	const char* verdict = "ok";
 	if (pc < 0.01) {
-		n = "EXTREMELY Worrying and very unusual";
-		if (pc > 1e-10) n += 10;
-		if (pc > 1e-8) n += 13;
-		if (pc > 1e-6) n += 5;
+		verdict = "EXTREMELY Worrying and very unusual";
+		if (pc > 1e-10) verdict += 10;
+		if (pc > 1e-8) verdict += 13;
+		if (pc > 1e-6) verdict += 5;
 	}
 
 	if (final) printf("final\n");
-	printf("p = %.3g (%s)\n", pvalue, n);
+	printf("p = %.3g (%s)\n", pvalue, verdict);
 
 	if (pvalue < low_pvalue) exit(0);
 	
