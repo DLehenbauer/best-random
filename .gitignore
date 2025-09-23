@@ -11,3 +11,4 @@ tools/RNG_Test.exe
 tools/p.sh
 tools/gf2/venv
 tools/gf2/__pycache__
+tools/hwd/hwd

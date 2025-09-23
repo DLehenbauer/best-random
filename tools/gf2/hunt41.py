@@ -13,7 +13,7 @@ def test(c0: int, c1: int):
         s1 = s[1]
 
         s[0] = s1 ^ a.shr(s0, c0)
-        s[1] = s1 ^ a.rol(s0, c1)
+        s[1] = s0 ^ a.shl(s1, c1)
 
         return s
 

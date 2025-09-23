@@ -114,14 +114,26 @@ uint64_t xorshift64(uint64_t x) {
 }
 ```
 
+Found:
+
+```
+uint64_t s0 = s[0];
+uint64_t s1 = s[1];
+
+s[0] = s1 ^ (s0 >> 9);
+s[1] = s1 ^ rol64(s0, 35);
+```
+
 ## Permutations
-|  shift  | range |
-|---------|-------|
-| a >> 27 | 0..31 |
-| a >> 28 | 0..15 |
-| a >> 29 |  0..7 |
-| a >> 30 |  0..3 |
-| a >> 31 |  0..1 |
+
+|   mask   |  shift  |  shift  | range |
+|----------|---------|---------|-------|
+| a & 0x3f | a >> 58 |    -    | 0..63 |
+| a & 0x1f | a >> 59 | a >> 27 | 0..31 |
+| a & 0x0f | a >> 60 | a >> 28 | 0..15 |
+| a & 0x07 | a >> 61 | a >> 29 |  0..7 |
+| a & 0x03 | a >> 62 | a >> 30 |  0..3 |
+| a & 0x01 | a >> 63 | a >> 31 |  0..1 |
 
 ## References
 
@@ -129,3 +141,4 @@ uint64_t xorshift64(uint64_t x) {
 * [Middle-Square Weyl Sequence RNG](https://arxiv.org/pdf/1704.00358)
 * [SHISHUA: The Fastest Pseudo-Random Generator In the World](https://espadrine.github.io/blog/posts/shishua-the-fastest-prng-in-the-world.html)
 * [Some Uniform and Normal Random Number Generators](https://maths-people.anu.edu.au/brent/random.html)
+* [TestU01 and Practrand: Tools for a randomness evaluation for famous multimedia ciphers](https://rd.springer.com/content/pdf/10.1007/s11042-020-09108-w.pdf)

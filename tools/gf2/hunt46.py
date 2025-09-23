@@ -2,8 +2,9 @@
 
 from gf2 import XorshiftAnalyzer
 
-bit_width = 32
-state_size = 3
+bit_width = 64
+state_size = 2
+num_consts = 3
 
 import itertools
 import time
@@ -11,15 +12,18 @@ import time
 def test(c):
     a = XorshiftAnalyzer(state_size=state_size, bit_width=bit_width)
 
-    # XSAdd (but with state_size=3)
+    # Computes the next state of our Xorshift generator
     def next_state_func(s):
-        t = s[0]
-        t ^= a.shl(t, c[0])
-        t ^= a.shr(t, c[1])
-        t ^= a.shl(s[2], c[2])
-        s[0] = s[1]
-        s[1] = s[2]
-        s[2] = t
+        c0, c1, c2 = c
+        s0 = s[0]
+        s1 = s[1]
+
+        s0 ^= a.shl(s0, c0)
+        s0 ^= a.shr(s0, c1)
+        s0 ^= s1 ^ a.shr(s1, c2)
+
+        s[0] = s1
+        s[1] = s0
 
         return s
 
@@ -27,9 +31,9 @@ def test(c):
     return (result.period == a.max_period)
 
 if __name__ == "__main__":
-    print(f"--- BEGIN: (bit_width={bit_width}, state_size={state_size})", flush=True)
+    print(f"--- BEGIN: (bit_width={bit_width}, state_size={state_size}, num_consts={num_consts})", flush=True)
     start = time.time()
-    for c in itertools.product(range(bit_width), repeat=3):
+    for c in itertools.product(range(bit_width), repeat=num_consts):
         if test(c):
             print(f"{c}: OK", flush=True)
     elapsed = time.time() - start

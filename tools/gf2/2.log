@@ -1,3 +1,4 @@
+--- BEGIN: (bit_width=32, state_size=4)
 (1, 11, 18): OK
 (1, 14, 3): OK
 (2, 5, 15): OK
@@ -40,3 +41,4 @@
 (21, 17, 4): OK
 (21, 17, 7): OK
 (23, 9, 2): OK
+--- END: (elapsed: 8661.72 seconds)
