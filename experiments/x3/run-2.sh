@@ -63,7 +63,7 @@ test () {
         reportArg="-d '$logDir/{1}/{2}' > /dev/null"
     else
         bin="./bin/$1"
-        reportArg="> '$logDir/{1}/{2}/report.txt'"
+        reportArg="--progress > '$logDir/{1}/{2}/report.txt'"
     fi
 
     test_core $bin $sizeName $sizeBytes "$reportArg" $cleanupAfter
@@ -114,6 +114,8 @@ echo "[$(date '+%m/%d %T')]: Begin"
 #test "mod3" $size_huge && \
 #test "lownda" $size_huge && \
 #test "mod3" $size_tera false && \
-test "lownda" $size_tera false 
+#test "lownda" $size_tera false && \
+#test "z9" $size_tera false && \
+test "mcp" $size_tera false
 
 echo "[$(date '+%m/%d %T')]: End"

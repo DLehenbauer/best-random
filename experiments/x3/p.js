@@ -81,7 +81,7 @@ async function parseAll(data, filename) {
             });
     
             for (const property of ["version", "size", "tests", "worst", "completed", "passed", "p", "evaluation"]) {
-                assert.notEqual(result[property], undefined, `Require property '${property}' missing from '${filename}'.`);
+                assert.notEqual(result[property], undefined, `Required property '${property}' missing from '${filename}'.`);
             }
         } else {
             const resultExp = /^P = (.*)$/gm;
@@ -104,7 +104,7 @@ async function parseAll(data, filename) {
             });
     
             for (const property of ["p"]) {
-                assert.notEqual(result[property], undefined, `Require property '${property}' missing from '${filename}'.`);
+                assert.notEqual(result[property], undefined, `Required property '${property}' missing from '${filename}'.`);
             }    
         }
 
