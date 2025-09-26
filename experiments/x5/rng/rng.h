@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <immintrin.h>
 
 // Modern GCC/CLang reduce these to a single instruction on x86/x64.
 static inline uint32_t rol32(uint32_t v, uint32_t k) { k &= 31; return (v << k) | (v >> (32 - k)); }
@@ -25,33 +26,43 @@ static inline uint64_t rev64(uint64_t v) {
     return rol64(v, 32);
 }
 
-static uint64_t s[2] = { 0 };
+extern __m128i s_simd;
+
+// Generate byte swizzle mask from 16-bit element pattern
+static inline __m128i get_swizzle_mask(const int pattern[8]) {
+    // Convert 16-bit element indices to byte indices
+    // Each 16-bit element occupies 2 bytes in little-endian format
+    return _mm_set_epi8(
+        (pattern[7] * 2) + 1, (pattern[7] * 2),  // element 7 -> bytes
+        (pattern[6] * 2) + 1, (pattern[6] * 2),  // element 6 -> bytes
+        (pattern[5] * 2) + 1, (pattern[5] * 2),  // element 5 -> bytes
+        (pattern[4] * 2) + 1, (pattern[4] * 2),  // element 4 -> bytes
+        (pattern[3] * 2) + 1, (pattern[3] * 2),  // element 3 -> bytes
+        (pattern[2] * 2) + 1, (pattern[2] * 2),  // element 2 -> bytes
+        (pattern[1] * 2) + 1, (pattern[1] * 2),  // element 1 -> bytes
+        (pattern[0] * 2) + 1, (pattern[0] * 2)   // element 0 -> bytes
+    );
+}
 
 static inline void advance() {
-    uint64_t s0 = s[0];
-    uint64_t s1 = s[1];
-
-    s[0] = s1 ^ (s0 >> 9);
-    s[1] = s1 ^ rol64(s0, 35);
+    static const int swizzle_pattern[8] = {1, 2, 7, 5, 6, 0, 3, 4};
+    __m128i swizzle_mask = get_swizzle_mask(swizzle_pattern);
+    
+    __m128i x = _mm_srli_epi64(s_simd, 13);
+    __m128i y = _mm_shuffle_epi8(s_simd, swizzle_mask);
+    s_simd = _mm_xor_si128(x, y);
 }
 
 static inline uint64_t rng_u64() {
-    const uint64_t s0 = s[0];
-    const uint64_t s1 = s[1];
-
-    (void) s1;
-    (void) s0;
-
-    //const uint64_t result = rol64(s0 + s1, 1) + s1;     // Unusual at 8TB / Fail at 16TB (-tf)
-    //const uint64_t result = rol64(s0 + s1, 2) + s1;     // Unusual at 32TB [and then exited because we didn't specify -tlmax] (-tf)
-    //const uint64_t result = rol64(s0 + s1, 3) + s1;     // Unusual at 64TB / Fail at 128TB (-tf)
-    const uint64_t result = rol64(s0 + s1, 4) + s1;     // Unusual at 64TB (hwd @ 1.5e+13 bytes)
-
     advance();
-    return result;
-    // return s[0] + (s[1] >> (s[1] & 0x07));   // Unusual at 8TB / Fail at 32TB (no -tf)
-    // return s[0] + (s[1] >> (s[1] & 0x03));   // Unusual at 4TB / Fail at 8TB (no -tf)
-    // return s[0] + (s[1] >> (s[1] & 0x01));   // Unusual at 8TB / Fail at 16TB (no -tf)
+
+    const uint64_t s0 = _mm_extract_epi64(s_simd, 0);
+    const uint64_t s1 = _mm_extract_epi64(s_simd, 1);
+
+    (void) s0;
+    (void) s1;
+
+    return (s0 * 0x00000100000001b3) + rol64(s1, s1);
 }
 
 #ifndef COUNT_OF

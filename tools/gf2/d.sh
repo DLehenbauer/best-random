@@ -14,7 +14,7 @@ fi
 
 trap 'echo; echo "Exiting."; exit' INT TERM
 
-total=$(cat args | wc -l)
+total=$(echo "$(cat args | wc -l) * 65 * 65" | bc)
 processed=$(cat "$FILE" | wc -l)
 percent_done=$(echo "scale=2; ($processed * 100) / $total" | bc)
 
