@@ -27,13 +27,32 @@ pmcp: all
 	cd $(TOOLS_DIR)/GJRand/src/gjrand.4.3.0.0/testunif && \
 	$(RNG) | ./pmcp --small
 
-sc: all
-	cd $(TOOLS_DIR)/TestU01 && \
-	$(RNG) | ./TestU01_rng -s
+#
+# Create targets for TestU01 variants
+#
 
-scr: all
+# Create a TestU01 target for a given name and options
+define testu01_target
+$(1): all
 	cd $(TOOLS_DIR)/TestU01 && \
-	$(RNG) | ./TestU01_rng -s -r
+	$(RNG) | ./TestU01_rng $(2)
+endef
+
+# Create all bit selection/ordering variants for a given TestU01 suite
+define testu01_variants
+$(eval $(call testu01_target,$(1),$(2)))
+$(eval $(call testu01_target,$(1)r,$(2) -r))
+$(eval $(call testu01_target,$(1)l,$(2) -l))
+$(eval $(call testu01_target,$(1)lr,$(2) -l -r))
+$(eval $(call testu01_target,$(1)h,$(2) -h))
+$(eval $(call testu01_target,$(1)hr,$(2) -h -r))
+endef
+
+# Define targets for all TestU01 suites and their variants
+$(eval $(call testu01_variants,sc,-s))	# SmallCrush: sc, scl, sclr, sch, schr
+$(eval $(call testu01_variants,c,-c)) 	# Crush: c, cl, clr, ch, chr
+$(eval $(call testu01_variants,bc,-b))	# BigCrush: bc, bcl, bclr, bch, bchr  
+$(eval $(call testu01_variants,ac,-a))	# AdaptiveCrush: ac, acl, aclr, ach, achr
 
 clean:
 	rm -f $(RNG_EXEC)
