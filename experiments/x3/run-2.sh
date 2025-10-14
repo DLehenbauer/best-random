@@ -35,7 +35,7 @@ test_core () {
         cleanupCmd=""
     fi
     
-    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -o0 -e0 $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null $cleanupCmd" \
+    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && stdbuf -o 64K $rng -p0 {1} -p1 {2} | stdbuf -o0 -e0 $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null $cleanupCmd" \
        && cp $argsFile $argsFile.bak \
        && cp $passFile $passFile.bak \
        && cat $passFile | sort -g | uniq > $argsFile \
@@ -104,18 +104,20 @@ size_ten_tera="ten-tera 10995116277760"
 
 echo "[$(date '+%m/%d %T')]: Begin"
 
-#test "mod3" $size_tiny && \
-#test "mod3" $size_small && \
-#test "mod3" $size_standard && \
-#test "z9" $size_standard && \
-#test "mod3" $size_big && \
-#test "lownda" $size_big && \
-#test "z9" $size_big && \
-#test "mod3" $size_huge && \
-#test "lownda" $size_huge && \
-#test "mod3" $size_tera false && \
-#test "lownda" $size_tera false && \
-#test "z9" $size_tera false && \
+# lownda did not reject additional candidates below 'huge'
+
+#test "mod3" $size_tiny true && \
+#test "mod3" $size_small true && \
+#test "mod3" $size_standard true && \
+#test "z9" $size_standard true && \
+#test "mod3" $size_big true && \
+test "z9" $size_big true && \
+test "mod3" $size_huge true && \
+test "lownda" $size_huge true && \
+test "z9" $size_tera true && \
+test "mod3" $size_tera false && \
+test "lownda" $size_tera false && \
+test "z9" $size_tera false && \
 test "mcp" $size_tera false
 
 echo "[$(date '+%m/%d %T')]: End"

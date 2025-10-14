@@ -19,7 +19,6 @@ update () {
     date
     echo "$lastPassed -- processed: $processed/$total ($percent_done%) rejected: $rejected/$processed ($percent_passed%)"
     echo
-    node ./scan.js
 }
 
 # Update the display once every 'n' seconds
