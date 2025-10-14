@@ -12,3 +12,5 @@ tools/p.sh
 tools/gf2/venv
 tools/gf2/__pycache__
 tools/hwd/hwd
+tools/gf2-old/venv
+tools/gf2-old/__pycache__

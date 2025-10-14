@@ -13,13 +13,7 @@ import galois
 from typing import List, Callable
 import logging
 from dataclasses import dataclass
-from enum import IntEnum
 
-class Op(IntEnum):
-    SHR = 0
-    SHL = 1
-    ROL = 2
-    
 @dataclass
 class SearchResult:
     period: int
@@ -68,16 +62,6 @@ class XorshiftAnalyzer:
     def rol(self, value: int, shift: int) -> int:
         shift &= (self.bit_width - 1)
         return self.shl(value, shift) | self.shr(value, self.bit_width - shift)
-
-    def op(self, operation: Op, left: int, right: int) -> int:
-        if operation is Op.SHR:
-            return self.shr(left, right)
-        if operation is Op.SHL:
-            return self.shl(left, right)
-        if operation is Op.ROL:
-            return self.rol(left, right)
-        
-        raise ValueError(f"Unhandled operation: {operation}")
 
     def u(self, value: int) -> int:
         """
