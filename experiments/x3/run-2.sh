@@ -1,11 +1,16 @@
 #!/bin/bash
 
-logDir=$PWD/logs
-argsFile=$PWD/args
-passFile=$PWD/pass
-filterScript=$PWD/f2.js
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-workDir="../../tools/GJRand/src/gjrand.4.3.0.0/testunif/"
+logDir="$script_dir/logs"
+argsFile="$script_dir/args"
+passFile="$script_dir/pass"
+filterScript="$script_dir/f2.js"
+
+# 'mcp' requires working directory to be testunif to find test binaries.
+workDir="$script_dir/../../tools/GJRand/src/gjrand.4.3.0.0/testunif/"
+
+# RNG executable relative to workDir
 rng="../../../../Rng/rng"
 
 test_core () {
@@ -35,7 +40,7 @@ test_core () {
         cleanupCmd=""
     fi
     
-    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && stdbuf -o 64K $rng -p0 {1} -p1 {2} | stdbuf -o0 -e0 $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null $cleanupCmd" \
+    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null $cleanupCmd" \
        && cp $argsFile $argsFile.bak \
        && cp $passFile $passFile.bak \
        && cat $passFile | sort -g | uniq > $argsFile \
@@ -66,7 +71,7 @@ test () {
         reportArg="--progress > '$logDir/{1}/{2}/report.txt'"
     fi
 
-    test_core $bin $sizeName $sizeBytes "$reportArg" $cleanupAfter
+    test_core $bin $sizeName $sizeBytes "$reportArg" $cleanupAfter | tee -a run.log
 }
 
 reset () {
@@ -83,9 +88,9 @@ reset () {
     rm -f $argsFile
     
     echo "[$(date '+%m/%d %T')]: Building '$argsFile'..."
-    for ((i = 0; i < 4096; i += 1));
+    for ((i = 0; i < 1024; i += 1));
     do
-        for ((j = 0; j < 4096; j += 1));
+        for ((j = 0; j < 1024; j += 1));
         do
             echo "$i $j" >> $argsFile
         done
@@ -100,24 +105,31 @@ size_huge="huge 107374182400"
 size_tera="tera 1099511627776"
 size_ten_tera="ten-tera 10995116277760"
 
-#reset
+#reset | tee -a run.log
 
-echo "[$(date '+%m/%d %T')]: Begin"
+echo "[$(date '+%m/%d %T')]: Begin" | tee -a run.log
 
-# lownda did not reject additional candidates below 'huge'
+# 'mod3': chi-square test on mod 3 residues.  Operates on a sliding window of 4 byte blocks.
+#         Runs at full size in mcp.
+#
+# 'z9': Bit balance test, chi-square on 0/1 counts.  Operates on 4KB blocks.  'z9' runs at
+#       full size in mcp.
+#
+# 'lownda': chi-square test on low nibble distribution.  Operates on the low 4 bits of each
+#           32 bit word.  'lownda' runs at 1/2 size in mcp.
 
 #test "mod3" $size_tiny true && \
 #test "mod3" $size_small true && \
 #test "mod3" $size_standard true && \
 #test "z9" $size_standard true && \
 #test "mod3" $size_big true && \
-test "z9" $size_big true && \
+#test "z9" $size_big true && \
 test "mod3" $size_huge true && \
+test "z9" $size_huge true && \
 test "lownda" $size_huge true && \
-test "z9" $size_tera true && \
 test "mod3" $size_tera false && \
+test "z9" $size_tera true && \
 test "lownda" $size_tera false && \
-test "z9" $size_tera false && \
 test "mcp" $size_tera false
 
-echo "[$(date '+%m/%d %T')]: End"
+echo "[$(date '+%m/%d %T')]: End" | tee -a run.log
