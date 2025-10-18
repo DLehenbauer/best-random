@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,19 +10,17 @@
 
 #include "rng.h"
 
-// Define the SIMD state variable
-__m128i s_simd = { 0 };
-
-#define ELEMENT_COUNT (4096 / sizeof(uint64_t))
-#define BUFFER_SIZE (sizeof(uint64_t) * ELEMENT_COUNT)
+#define BUFFER_SIZE (1 << 20) // 1 MB
+#define ELEMENT_SIZE (sizeof(uint64_t))
+#define ELEMENT_COUNT (BUFFER_SIZE / ELEMENT_SIZE)
 
 // Adapted from SplitMix64:
 // (See: https://prng.di.unimi.it/splitmix64.c)
 static inline uint64_t mix64(uint64_t a, uint64_t b) {
     a += b * 0x9e3779b97f4a7c15ULL;
-	a = (a ^ (a >> 30)) * 0xbf58476d1ce4e5b9ULL;
-	a = (a ^ (a >> 27)) * 0x94d049bb133111ebULL;
-	return a ^ (a >> 31);
+    a = (a ^ (a >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    a = (a ^ (a >> 27)) * 0x94d049bb133111ebULL;
+    return a ^ (a >> 31);
 }
 
 static uint64_t wyrand_state;
@@ -50,30 +49,53 @@ static inline uint64_t seed(void) {
     __uint128_t a = wyrand_state;
     __uint128_t b = a ^ 0x8bb84b93962eacc9ull;
     __uint128_t m = a * b;
-    return (m >> 64) ^ (uint64_t) m;
+    return (m >> 64) ^ (uint64_t)m;
 }
 
-static inline void out_u64(uint64_t value) {
-    static uint64_t buffer[ELEMENT_COUNT];
-    static int i = 0;
-
-    if (i == ELEMENT_COUNT) {
-        fwrite((void*) &buffer, sizeof(uint64_t), ELEMENT_COUNT, stdout);
-        i = 0;
+void parseArg(int argc, char* argv[], int i) {
+    if (argc - i != (int)COUNT_OF(p)) {
+        fprintf(stderr,
+                "Error: expected exactly %zu decimal integer%s for p[].\n"
+                "Usage: %s <p[0]> ... <p[%zu]>\n",
+                (size_t)COUNT_OF(p),
+                COUNT_OF(p) == 1 ? "" : "s",
+                argv[0],
+                (size_t)COUNT_OF(p) - 1);
+        exit(EXIT_FAILURE);
     }
 
-    buffer[i++] = value;
+    for (size_t k = 0; k < COUNT_OF(p); k++, i++) {
+        char* end = NULL;
+        errno = 0;
+        unsigned long long v = strtoull(argv[i], &end, 10); // strictly base-10
+        if (end == argv[i] || *end != '\0' || errno == ERANGE) {
+            fprintf(stderr, "Error: invalid decimal for p[%zu]: '%s'\n", k, argv[i]);
+            exit(EXIT_FAILURE);
+        }
+        p[k] = (uint64_t)v;
+    }
 }
 
-int main(int argc, char *argv[]) {
-    FILE* fp = freopen(NULL, "wb", stdout);  // Only necessary on Windows, but harmless.
+int main(int argc, char* argv[]) {
+    FILE* fp = freopen(NULL, "wb", stdout); // Only necessary on Windows, but harmless.
     assert(fp);
 
     init_seed(0);
-    s_simd = _mm_set_epi64x(seed(), seed());
+    for (int i = 0; i < COUNT_OF(s); i++) {
+        s[i] = seed();
+    }
+
+    parseArg(argc, argv, 1);
 
     while (1) {
-        out_u64(rng_u64());
+        static uint64_t buffer[ELEMENT_COUNT] __attribute__((aligned(64)));
+        static const uint64_t* end = buffer + ELEMENT_COUNT;
+
+        for (uint64_t* p = buffer; p < end; p++) {
+            *p = rng_u64();
+        }
+
+        fwrite((void*)&buffer, BUFFER_SIZE, 1, stdout);
     }
 
     return 0;
