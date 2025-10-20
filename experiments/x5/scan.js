@@ -1,82 +1,220 @@
+#!/usr/bin/env node
+/* Scan HWD log files and summarize p-value progression.
+ *
+ * For each *.log in ./logs:
+ *  - Parse sequential test result blocks (each overall block ends with a 'p = ... (...)' line).
+ *  - Extract:
+ *      processed bytes (from 'processed ... bytes' line preceding each p line)
+ *      overall p-value (from 'p = ... (status)' line)
+ *      classification status (text inside parentheses)
+ *  - Compute per-file:
+ *      final bytes
+ *      final p / status
+ *      last_ok: last bytes at which status contains the word 'ok'
+ *
+ * Output:
+ *  Table (sorted by descending last_ok bytes, then status ascending):
+ *      file | bytes_processed | p_value | status | last_ok | final
+ *  Final status counts.
+ */
 const fs = require('fs');
 const path = require('path');
 
-// Define the path to the 'pass' file
-const filePath = path.join(__dirname, 'pass');
+const logDir = path.join(__dirname, 'logs');
 
-// Read the file asynchronously
-fs.readFile(filePath, 'utf8', (err, data) => {
-    if (err) {
-        console.error('Error reading the file:', err);
-        return;
-    }
+function parseNumber(s) {
+    if (!s) return NaN;
+    s = s.replace(/,/g, '');
+    const v = Number(s);
+    return isNaN(v) ? NaN : v;
+}
 
-    // Split the file content into lines
-    const lines = data.split('\n');
-    const count = new Array(16).fill(0);
+function readLines(filePath) {
+    return fs.readFileSync(filePath, 'utf8').split(/\r?\n/);
+}
 
-    const extract = (r, i) => {
-        i <<= 1;
-        const mask = 0b11 << i;
-        return (r & mask) >>> i;
-    }
+const processedRe = /^processed\s+([0-9.+-eE]+)\s+bytes\s+in\s+([0-9.+-eE]+)\s+seconds/i;
+const pLineRe = /^p\s*=\s*([0-9.eE+-]+)\s*\(([^)]+)\)/i;
+const finalMarkerRe = /^final\s*$/i;
 
-    const results = [];
+/* Map verdict string to severity number 0..4 (aligned with chart.js)
+   0 ok
+   1 unusual
+   2 very unusual
+   3 Worrying and very unusual
+   4 EXTREMELY Worrying and very unusual */
+function severityOf(status) {
+    const s = status.toLowerCase();
+    if (s.includes('extremely')) return 4;
+    if (s.includes('worrying')) return 3;
+    if (s.includes('very')) return 2;
+    if (s.includes('unusual')) return 1;
+    return 0;
+}
+const severityLabels = [
+    'OK',
+    'unusual',
+    'very unusual',
+    'worrying',
+    'fail'
+];
 
-    // Process each line
-    lines.forEach((line, index) => {
-        // Trim whitespace and skip empty lines
-        const trimmedLine = line.trim();
-        if (trimmedLine === '') {
-            return;
+function parseLog(filePath) {
+    const lines = readLines(filePath);
+    const blocks = [];
+    let pendingBytes = null;
+    let seenFinal = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const mProc = processedRe.exec(line);
+        if (mProc) {
+            pendingBytes = parseNumber(mProc[1]);
+            continue;
         }
 
-        // Split the line into integers (assuming space-separated)
-        const [r1, r2] = trimmedLine.split(/\s+/).map(Number);
+        if (finalMarkerRe.test(line)) {
+            seenFinal = true;
+            continue;
+        }
 
-        results.push({
-            a1: extract(r1, 0),
-            b1: extract(r1, 1),
-            c1: extract(r1, 2),
-            d1: extract(r1, 3),
-            e1: extract(r1, 4),
-            f1: extract(r1, 5),
+        const mP = pLineRe.exec(line);
+        if (mP) {
+            const pVal = parseNumber(mP[1]);
+            const status = mP[2].trim();
+            const last = blocks[blocks.length - 1];
+            if (last && last.bytes === pendingBytes && last.p === pVal && last.status === status) {
+                // duplicate (e.g., 'final' duplication) -> skip
+            } else {
+                blocks.push({
+                    bytes: pendingBytes,
+                    p: pVal,
+                    status,
+                    final: seenFinal
+                });
+            }
+            continue;
+        }
+        // Ignore other lines (mix3 extreme etc.).
+    }
 
-            a2: extract(r2, 0),
-            b2: extract(r2, 1),
-            c2: extract(r2, 2),
-            d2: extract(r2, 3),
-            e2: extract(r2, 4),
-            f2: extract(r2, 5),
+    if (!blocks.length) {
+        return {
+            file: path.basename(filePath),
+            blocks: [],
+            final: null,
+            lastOk: null,
+            hasFinal: seenFinal
+        };
+    }
+
+    const finalBlock = blocks[blocks.length - 1];
+    let lastOkBytes = null;
+    for (let i = blocks.length - 1; i >= 0; i--) {
+        if (/ok/i.test(blocks[i].status)) {
+            lastOkBytes = blocks[i].bytes;
+            break;
+        }
+    }
+
+    return {
+        file: path.basename(filePath),
+        blocks,
+        final: finalBlock,
+        lastOk: lastOkBytes,
+        hasFinal: seenFinal
+    };
+}
+
+function summarize(results) {
+    // Sort by descending last_ok bytes (missing => -Infinity, so last),
+    // then by final p-value descending, then by status severity ascending (0 ok .. 4 extreme)
+    results.sort((a, b) => {
+        const ax = a.lastOk != null ? a.lastOk : -Infinity;
+        const bx = b.lastOk != null ? b.lastOk : -Infinity;
+        if (bx !== ax) return bx - ax;
+
+        const ap = (a.final && Number.isFinite(a.final.p)) ? a.final.p : -Infinity;
+        const bp = (b.final && Number.isFinite(b.final.p)) ? b.final.p : -Infinity;
+        if (bp !== ap) return bp - ap;
+
+        const sa = a.final ? severityOf(a.final.status) : Number.MAX_SAFE_INTEGER;
+        const sb = b.final ? severityOf(b.final.status) : Number.MAX_SAFE_INTEGER;
+        return sa - sb;
+    });
+
+    const rows = [];
+    const statusCounts = [0,0,0,0,0];
+
+    for (const r of results) {
+        if (!r.final) {
+            rows.push([r.file, '-', '-', '-', '-', '-']);
+            continue;
+        }
+        const sev = severityOf(r.final.status);
+        statusCounts[sev]++;
+        const finalLabel = severityLabels[sev];
+        rows.push([
+            r.file,
+            r.final.bytes != null ? r.final.bytes.toExponential(6) : '-',
+            r.final.p != null ? r.final.p.toExponential(6) : '-',
+            finalLabel,
+            r.lastOk != null ? r.lastOk.toExponential(6) : '-',
+            r.hasFinal ? '*' : '-'
+        ]);
+    }
+
+    const header = ['file','bytes_processed','p_value','status','last_ok','final'];
+
+    const colWidths = header.map((h, idx) =>
+        Math.max(
+            h.length,
+            ...rows.map(r => r[idx].length)
+        )
+    );
+
+    function pad(str, w) { return str + ' '.repeat(w - str.length); }
+
+    console.log(colWidths.map((w,i)=>pad(header[i], w)).join('  '));
+    console.log(colWidths.map(w => '-'.repeat(w)).join('  '));
+    for (const r of rows) {
+        console.log(colWidths.map((w,i)=>pad(r[i], w)).join('  '));
+    }
+
+    console.log('');
+    console.log('Final status counts:');
+    for (let i = 0; i < statusCounts.length; i++) {
+        const v = statusCounts[i];
+        if (v) console.log(`  ${i} (${severityLabels[i]}): ${v}`);
+    }
+
+}
+
+function main() {
+    if (!fs.existsSync(logDir)) {
+        console.error('No logs directory:', logDir);
+        process.exit(1);
+    }
+    const files = fs.readdirSync(logDir)
+        .filter(f => f.endsWith('.log'))
+        .sort((a,b)=> {
+            const na = Number(a.split('.')[0]);
+            const nb = Number(b.split('.')[0]);
+            if (isNaN(na) || isNaN(nb)) return a.localeCompare(b);
+            return na - nb;
         });
-    });
 
-    const key1 = 'f1';
-    const key2 = 'f2';
-
-    // Prepare table data
-    const table = [];
-    for (const result of results) {
-        value1 = result[key1];
-        value2 = result[key2];
-        
-        const index = value1 << 2 | value2;
-        
-        if (!table[index]) {
-            table[index] = { count: 0 };
-            table[index][key1] = value1;
-            table[index][key2] = value2;
-        }
-        table[index].count++;
+    if (!files.length) {
+        console.error('No log files found.');
+        process.exit(1);
     }
 
-    // Sort by count descending
-    table.sort((x, y) => y.count - x.count);
+    const results = files.map(f => parseLog(path.join(logDir, f)));
+    summarize(results);
+}
 
-    // Print as table
-    console.log(` ${key1} | ${key2} | count | ratio`);
-    console.log('----|----|-------|-------');
-    table.forEach(row => {
-        console.log(`  ${row[key1]} |  ${row[key2]} | ${row.count} |  ${(row.count / table[0].count).toFixed(2)}`);
-    });
-});
+if (require.main === module) {
+    main();
+}

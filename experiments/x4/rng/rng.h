@@ -45,7 +45,8 @@ static inline uint64_t rng_u64() {
     //const uint64_t result = rol64(s0 + s1, 1) + s1;     // Unusual at 8TB / Fail at 16TB (-tf)
     //const uint64_t result = rol64(s0 + s1, 2) + s1;     // Unusual at 32TB [and then exited because we didn't specify -tlmax] (-tf)
     //const uint64_t result = rol64(s0 + s1, 3) + s1;     // Unusual at 64TB / Fail at 128TB (-tf)
-    const uint64_t result = rol64(s0 + s1, 4) + s1;     // Unusual at 64TB (hwd @ 1.5e+13 bytes)
+    //const uint64_t result = rol64(s0 + s1, 4) + s1;     // Unusual at 64TB / Fail at 256TB (-tf) -- hwd @ 1.5e+13 bytes
+    const uint64_t result = rol64(s0 + s1, 5) + s1;     // Unusual at ? / Fail at ? (-tf) -- hwd @ 1.75e+13 bytes
 
     advance();
     return result;
