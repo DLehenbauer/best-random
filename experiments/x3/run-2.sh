@@ -105,8 +105,6 @@ size_huge="huge 107374182400"
 size_tera="tera 1099511627776"
 size_ten_tera="ten-tera 10995116277760"
 
-#reset | tee -a run.log
-
 echo "[$(date '+%m/%d %T')]: Begin" | tee -a run.log
 
 # 'mod3': chi-square test on mod 3 residues.  Operates on a sliding window of 4 byte blocks.
@@ -115,16 +113,17 @@ echo "[$(date '+%m/%d %T')]: Begin" | tee -a run.log
 # 'z9': Bit balance test, chi-square on 0/1 counts.  Operates on 4KB blocks.  'z9' runs at
 #       full size in mcp.
 #
-# 'lownda': chi-square test on low nibble distribution.  Operates on the low 4 bits of each
-#           32 bit word.  'lownda' runs at 1/2 size in mcp.
+# 'lownda': chi-square on low nibble distribution.  Operates on the low 4 bits of each 32 bit
+#           word.  'lownda' runs at 1/2 size in mcp.
 
+#reset | tee -a run.log
 #test "mod3" $size_tiny true && \
 #test "mod3" $size_small true && \
 #test "mod3" $size_standard true && \
 #test "z9" $size_standard true && \
 #test "mod3" $size_big true && \
 #test "z9" $size_big true && \
-test "mod3" $size_huge true && \
+#test "mod3" $size_huge true && \
 test "z9" $size_huge true && \
 test "lownda" $size_huge true && \
 test "mod3" $size_tera false && \

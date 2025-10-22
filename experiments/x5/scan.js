@@ -130,11 +130,16 @@ function parseLog(filePath) {
 
 function summarize(results) {
     // Sort by descending last_ok bytes (missing => -Infinity, so last),
-    // then by status severity ascending (0 ok .. 4 extreme)
+    // then by final p-value descending, then by status severity ascending (0 ok .. 4 extreme)
     results.sort((a, b) => {
         const ax = a.lastOk != null ? a.lastOk : -Infinity;
         const bx = b.lastOk != null ? b.lastOk : -Infinity;
         if (bx !== ax) return bx - ax;
+
+        const ap = (a.final && Number.isFinite(a.final.p)) ? a.final.p : -Infinity;
+        const bp = (b.final && Number.isFinite(b.final.p)) ? b.final.p : -Infinity;
+        if (bp !== ap) return bp - ap;
+
         const sa = a.final ? severityOf(a.final.status) : Number.MAX_SAFE_INTEGER;
         const sb = b.final ? severityOf(b.final.status) : Number.MAX_SAFE_INTEGER;
         return sa - sb;

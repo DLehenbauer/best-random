@@ -1,6 +1,6 @@
 Notes:
-* Permutations that just 'hi32' and 'lo32' should be redundant (except that lownda focusen on lower bits only).
-* Testing 'a + b' and 'b + a' were redundant.  One could have been replaced with '^'.
+* Permutations that just 'hi32' and 'lo32' are redundant (note that lownda examines each 32b word).
+* Testing 'a + b' and 'b + a' are redundant.  (One could have been replaced with '^'.)
 * All final candidates involved 'w' in both hi32() and lo32().
 
 ```c
@@ -97,6 +97,20 @@ uint32_t lo32() { return rot(w - y, r1 & 0x1f) - rot(x, (r1 >> 5) & 0x1f); }
 Final Candidates
 
 In the next round (which IIRC was tera), everything looked to be converging on failure.
+
+The highest scores were:
+```
+r0=3375 r1=754
+uint32_t hi32() { return rot(w + w, z) + rot(x, y); }
+uint32_t lo32() { return rot(z - x, w) - rot(w, z); }
+
+r0=3919 r1=1270
+uint32_t hi32() { return rot(w + w, x) + rot(y, w); }
+uint32_t lo32() { return rot(z - y, w) + rot(w, x); }
+```
+
+All remaining candidates are listed below:
+
 ```
 r0=55 r1=2498
 uint32_t hi32() { return rot(w - y, w) - rot(x, x); }

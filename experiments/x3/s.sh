@@ -4,6 +4,9 @@
 # are possible (most noticeable early in the run).
 
 update () {
+    tail -v ./run.log
+    echo
+
     previous_args_file="pass.bak"
 
     total=$(cat $previous_args_file | wc -l)

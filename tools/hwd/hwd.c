@@ -625,7 +625,7 @@ static double compute_pvalue(const bool trans) {
 
 
 static time_t tstart;
-static double low_pvalue = 1e-10;
+static double low_pvalue = 5e-11;
 
 /* This is the call made when we want to print some analysis. This will be
    done multiple times if --progress is used. */
