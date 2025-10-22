@@ -1,7 +1,7 @@
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 all:
-	make base rng stdin
+	make base stdin
 
 fetchSrc:
 	mkdir -p src
@@ -18,12 +18,6 @@ fetchSrc:
 
 stdin:
 	gcc -std=c99 -Wall -O3 -fomit-frame-pointer -march=native -mtune=native -o TestU01_stdin TestU01_stdin.c adaptive/adaptive_crush.c -Iadaptive -Iinclude -Llib -ltestu01 -lprobdist -lmylib -lm
-
-rng:
-	gcc -std=c99 -Wall -O3 -fomit-frame-pointer -march=native -mtune=native -o TestU01_rng TestU01_rng.c main.c ../Rng/rng.c adaptive/adaptive_crush.c -Iadaptive -Iinclude -Llib -ltestu01 -lprobdist -lmylib -lm
-
-pcg:
-	gcc -std=c99 -Wall -O3 -fomit-frame-pointer -march=native -mtune=native -o TestU01_rng TestU01_pcg.c main.c generators/pcg_basic.c adaptive/adaptive_crush.c -Iadaptive -Iinclude -Llib -ltestu01 -lprobdist -lmylib -lm
 
 base:
 	cd src/TestU01-1.2.3 && \
