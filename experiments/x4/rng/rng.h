@@ -2,11 +2,15 @@
 
 #include <stdint.h>
 
+#ifndef COUNT_OF
+#define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+#endif
+
 // Modern GCC/CLang reduce these to a single instruction on x86/x64.
-static inline uint32_t rol32(uint32_t v, uint32_t k) { k &= 31; return (v << k) | (v >> (32 - k)); }
-static inline uint64_t rol64(uint64_t v, uint64_t k) { k &= 63; return (v << k) | (v >> (64 - k)); }
-static inline uint32_t ror32(uint32_t v, uint32_t k) { k &= 31; return (v >> k) | (v << (32 - k)); }
-static inline uint64_t ror64(uint64_t v, uint64_t k) { k &= 63; return (v >> k) | (v << (64 - k)); }
+static inline uint32_t rol32(uint32_t v, int r) { r &= 31; return (v << r) | (v >> (32 - r)); }
+static inline uint64_t rol64(uint64_t v, int r) { r &= 63; return (v << r) | (v >> (64 - r)); }
+static inline uint32_t ror32(uint32_t v, int r) { r &= 31; return (v >> r) | (v << (32 - r)); }
+static inline uint64_t ror64(uint64_t v, int r) { r &= 63; return (v >> r) | (v << (64 - r)); }
 
 static inline uint32_t rev32(uint32_t v) {
     v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
@@ -25,36 +29,23 @@ static inline uint64_t rev64(uint64_t v) {
     return rol64(v, 32);
 }
 
-static uint64_t s[2] = { 0 };
+static uint32_t s[4] = { 0 };
+static unsigned int p[3] = { 0 };
 
-static inline void advance() {
-    uint64_t s0 = s[0];
-    uint64_t s1 = s[1];
+static inline uint32_t next() {
+    sh1 = c[0]
+    sh2 = c[1]
+    sh3 = c[2]
 
-    s[0] = s1 ^ (s0 >> 9);
-    s[1] = s1 ^ rol64(s0, 35);
+    t = s[0]
+    t ^= t << p[0]
+    t ^= t >> p[1]
+    t ^= s[3] << p[2]
+
+    s[0] = s[1]
+    s[1] = s[2]
+    s[2] = s[3]
+    s[3] = t
+
+    return s[0]
 }
-
-static inline uint64_t rng_u64() {
-    const uint64_t s0 = s[0];
-    const uint64_t s1 = s[1];
-
-    (void) s1;
-    (void) s0;
-
-    //const uint64_t result = rol64(s0 + s1, 1) + s1;     // Unusual at 8TB / Fail at 16TB (-tf)
-    //const uint64_t result = rol64(s0 + s1, 2) + s1;     // Unusual at 32TB [and then exited because we didn't specify -tlmax] (-tf)
-    //const uint64_t result = rol64(s0 + s1, 3) + s1;     // Unusual at 64TB / Fail at 128TB (-tf)
-    //const uint64_t result = rol64(s0 + s1, 4) + s1;     // Unusual at 64TB / Fail at 256TB (-tf) -- hwd @ 1.5e+13 bytes
-    const uint64_t result = rol64(s0 + s1, 5) + s1;     // Unusual at ? / Fail at ? (-tf) -- hwd @ 1.75e+13 bytes
-
-    advance();
-    return result;
-    // return s[0] + (s[1] >> (s[1] & 0x07));   // Unusual at 8TB / Fail at 32TB (no -tf)
-    // return s[0] + (s[1] >> (s[1] & 0x03));   // Unusual at 4TB / Fail at 8TB (no -tf)
-    // return s[0] + (s[1] >> (s[1] & 0x01));   // Unusual at 8TB / Fail at 16TB (no -tf)
-}
-
-#ifndef COUNT_OF
-#define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
-#endif

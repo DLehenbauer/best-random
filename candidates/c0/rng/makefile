@@ -14,8 +14,11 @@ all:
 debug:
 	gcc -std=c99 -Wall -Werror -g3 -O0 -DDEBUG -fno-omit-frame-pointer -march=native -mtune=native -o $(RNG_EXEC) main.c
 
-test: all
-	$(RNG) | $(TOOLS_DIR)/PractRand/RNG_test stdin -multithreaded -tf 2 -tlmax 8192PB
+practrand: all
+	$(RNG) -i | $(TOOLS_DIR)/PractRand/RNG_test stdin64 -multithreaded -tlmax 8192PB
+
+practrand2: all
+	$(RNG) -i | $(TOOLS_DIR)/PractRand/RNG_test stdin64 -multithreaded -te 1 -tf 2 -tlmax 8192PB
 
 hwd: all
 	$(RNG) | $(TOOLS_DIR)/hwd/hwd
@@ -34,8 +37,7 @@ pmcp: all
 # Create a TestU01 target for a given name and options
 define testu01_target
 $(1): all
-	cd $(TOOLS_DIR)/TestU01 && \
-	$(RNG) | ./TestU01_rng $(2)
+	cd "$(TOOLS_DIR)/TestU01" && $(RNG) | ./TestU01_stdin $(2)
 endef
 
 # Create all bit selection/ordering variants for a given TestU01 suite
