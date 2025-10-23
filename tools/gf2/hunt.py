@@ -48,21 +48,18 @@ def test(op, r, config):
     # Computes the next state of our XSADD-style generator
     # Original XSADD: t=x; x=y; y=z; z=w; t^=t<<15; t^=t>>18; t^=w<<11; w=t; return w+z
     def next_state_func(s):
-        # Save x (s[0]) before shifting state
+        sh1 = r[0]
+        sh2 = r[1]
+        sh3 = r[2]
+        
         t = s[0]
-        
-        # Shift state: x->y, y->z, z->w  
-        s[0] = s[1]  # x = y
-        s[1] = s[2]  # y = z
-        s[2] = s[3]  # z = w
-        
-        # Apply three XOR operations with configurable shift amounts and directions
-        # This generalizes the XSADD pattern: t^=t<<A; t^=t>>B; t^=w<<C
-        t = t ^ o(op[0], t, r[0])        # First XOR shift on t
-        t = t ^ o(op[1], t, r[1])        # Second XOR shift on t  
-        t = t ^ o(op[2], s[3], r[2])     # Third XOR shift involving w (new z value)
-        
-        # Set w = t
+        t ^= o(op[0], t, sh1)
+        t ^= o(op[1], t, sh2)
+        t ^= o(op[2], s[3], sh3)
+
+        s[0] = s[1]
+        s[1] = s[2]
+        s[2] = s[3]
         s[3] = t
         
         return s
@@ -91,19 +88,19 @@ if __name__ == "__main__":
     
     with ProcessPoolExecutor(max_workers=mp.cpu_count()) as executor:
         # Search for XSADD-style patterns with 3 operations:
-        # op[0]: first XOR shift on t, op[1]: second XOR shift on t, op[2]: XOR shift on w
+        # op[0]: first op on t, op[1]: second op on t, op[2]: op on w
         # Test all permutations of operations: 0=shr(>>), 1=shl(<<), 2=rol(rotate left)
         
         futures = []  # Track submitted tasks
         
         for op_idx, op in enumerate(itertools.product(range(0, 3), repeat=3)):
             print(f"Testing operation combination {op_idx + 1}/{total_ops}: {op}", flush=True)
-            
-            # Test full range of shift amounts for 32-bit operations
-            # For 32-bit values, shifts of 0 and 32+ are trivial, so test 1-31
-            for r1 in range(1, 32):         # First shift: full range
-                for r2 in range(1, 32):     # Second shift: full range  
-                    for r3 in range(1, 32): # Third shift: full range
+
+            # Test full range of 32-bit operations.  We skip zero because Rotate/Shift of 0 will result in t ^ t.
+            # We include 32 because a shift of 32 results in t ^ 0, which covers also covers generators with fewer ops.
+            for r1 in range(1, 33):
+                for r2 in range(1, 33):
+                    for r3 in range(1, 33):
                         r = (r1, r2, r3)
                         
                         # Submit task for parallel execution
@@ -122,7 +119,7 @@ if __name__ == "__main__":
                                         ok = fut.result()
                                         if ok:
                                             found_count += 1
-                                            print(f"★ FOUND #{found_count}: op={op_val}, r={r_val}: XSADD-style PRNG with full period!", flush=True)
+                                            print(f"FOUND #{found_count}: op={op_val}, r={r_val}", flush=True)
                                         
                                         # Progress reporting every 1000 tests
                                         if count % 1000 == 0:
@@ -137,8 +134,8 @@ if __name__ == "__main__":
             ok = fut.result()
             if ok:
                 found_count += 1
-                print(f"★ FOUND #{found_count}: op={op_val}, r={r_val}: XSADD-style PRNG with full period!", flush=True)
-    
+                print(f"FOUND #{found_count}: op={op_val}, r={r_val}", flush=True)
+
     print(f"\n=== SEARCH COMPLETE ===")
     print(f"Total tests: {test_count:,}")
     print(f"Full-period generators found: {found_count}")

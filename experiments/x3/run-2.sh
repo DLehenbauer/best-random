@@ -114,7 +114,7 @@ echo "[$(date '+%m/%d %T')]: Begin" | tee -a run.log
 #       full size in mcp.
 #
 # 'lownda': chi-square on low nibble distribution.  Operates on the low 4 bits of each 32 bit
-#           word.  'lownda' runs at 1/2 size in mcp.
+#           word.  'lownda' runs at 1/2 size in mcp.  Sometimes rejects candidates at larger sizes.
 
 #reset | tee -a run.log
 #test "mod3" $size_tiny true && \
@@ -124,10 +124,9 @@ echo "[$(date '+%m/%d %T')]: Begin" | tee -a run.log
 #test "mod3" $size_big true && \
 #test "z9" $size_big true && \
 #test "mod3" $size_huge true && \
-test "z9" $size_huge true && \
-test "lownda" $size_huge true && \
-test "mod3" $size_tera false && \
-test "z9" $size_tera true && \
+#test "z9" $size_huge true && \
+#test "mod3" $size_tera false && \
+test "z9" $size_tera false && \
 test "lownda" $size_tera false && \
 test "mcp" $size_tera false
 
