@@ -12,18 +12,12 @@ from flint import nmod_mat
 import galois
 from typing import List, Callable
 import logging
-from dataclasses import dataclass
 from enum import IntEnum
 
 class Op(IntEnum):
     SHR = 0
     SHL = 1
     ROL = 2
-    
-@dataclass
-class SearchResult:
-    period: int
-    polynomial: str
 
 class XorshiftAnalyzer:
     """
@@ -111,6 +105,28 @@ class XorshiftAnalyzer:
         
         return self.GF2(bits)
     
+    def state_to_bits_raw(self, state: List[int]) -> np.ndarray:
+        """
+        Convert state array to bit vector without GF2 wrapping (for performance).
+        
+        Returns a plain numpy array instead of a galois field array. This is faster
+        when the result will be used for intermediate computations that don't require
+        GF2 field operations.
+        
+        Args:
+            state: State array of integers
+            
+        Returns:
+            Binary vector as plain numpy array (not GF(2))
+        """
+        bits = []
+        for element in state:
+            # Convert each element to binary representation
+            element_bits = [(element >> i) & 1 for i in range(self.bit_width)]
+            bits.extend(element_bits)
+        
+        return np.array(bits, dtype=int)
+    
     def bits_to_state(self, bits: np.ndarray) -> List[int]:
         """
         Convert bit vector back to state array.
@@ -145,6 +161,7 @@ class XorshiftAnalyzer:
         Returns:
             Characteristic matrix in GF(2)
         """
+        # Pre-allocate matrix as numpy array (convert to GF2 only once at end)
         matrix = np.zeros((self.total_bits, self.total_bits), dtype=int)
         
         # Test with each basis vector (single bit set)
@@ -170,10 +187,11 @@ class XorshiftAnalyzer:
                     raise ValueError(f"output_state[{j}] = {element} does not fit in {self.bit_width} bits (should be {self.u(element)})")
             
             # Convert back to bits and store as column in matrix
-            output_bits = self.state_to_bits(output_state)
+            # Use the raw version to avoid expensive GF2 array creation in hot loop
+            output_bits = self.state_to_bits_raw(output_state)
             matrix[:, i] = output_bits
 
-        # Convert to GF(2) matrix
+        # Convert to GF(2) matrix only once at the end
         gf2_matrix = self.GF2(matrix)
         
         # Print the matrix with full output (no truncation)
@@ -199,9 +217,14 @@ class XorshiftAnalyzer:
         flint_matrix = nmod_mat(self.total_bits, self.total_bits, 2)
         
         # Copy data from galois matrix to FLINT matrix
+        # Access the underlying numpy array directly to avoid expensive galois array indexing
+        # The .view(np.ndarray) gives us direct access to the raw integer data
+        matrix_data = matrix.view(np.ndarray)
+        
         for i in range(self.total_bits):
             for j in range(self.total_bits):
-                flint_matrix[i, j] = int(matrix[i, j])
+                # Access the numpy array directly - much faster than galois array indexing
+                flint_matrix[i, j] = int(matrix_data[i, j])
         
         # Compute characteristic polynomial using FLINT (much faster)
         flint_poly = flint_matrix.charpoly()
@@ -215,30 +238,32 @@ class XorshiftAnalyzer:
         # Create galois polynomial from coefficients
         galois_poly = galois.Poly(coeffs, field=self.GF2)
                 
-        # Log the characteristic polynomial
-        self.logger.debug(f"Characteristic Polynomial: {galois_poly}")
-        self.logger.debug(f"Polynomial Degree: {galois_poly.degree}")
+        # Log the characteristic polynomial (only if debug logging is enabled)
+        # Note: We use lazy evaluation with lambda to avoid expensive str() conversion
+        # when debug logging is disabled
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug(f"Characteristic Polynomial: {galois_poly}")
+            self.logger.debug(f"Polynomial Degree: {galois_poly.degree}")
         
         return galois_poly
     
-    def calculate_period(self, matrix: np.ndarray) -> int:
+    def calculate_period(self, poly: galois.Poly) -> int:
         """
         Calculate the period of the linear transformation.
         
         Args:
-            matrix: Characteristic matrix
+            poly: Characteristic polynomial
             
         Returns:
             Period of the transformation
         """
         # For a primitive polynomial of degree n, the period is 2^n - 1
-        poly = self.get_characteristic_polynomial(matrix)
         if poly.is_primitive():
             return (1 << poly.degree) - 1
         
         return -1
     
-    def check(self, next_state_func: Callable[[List[int]], List[int]]) -> SearchResult:
+    def check(self, next_state_func: Callable[[List[int]], List[int]]) -> int:
         """
         Validate a known generator function.
         
@@ -246,15 +271,12 @@ class XorshiftAnalyzer:
             next_state_func: The generator function to validate
             
         Returns:
-            Analysis results
+            Period of the generator (-1 if not primitive/maximal period)
         """
         self.logger.debug(f"Analyzing generator with {self.state_size}x{self.bit_width}-bit state...")
         
         matrix = self.build_characteristic_matrix(next_state_func)
         poly = self.get_characteristic_polynomial(matrix)        
-        period = self.calculate_period(matrix)
+        period = self.calculate_period(poly)
         
-        return SearchResult(
-            period=period,
-            polynomial=str(poly)
-        )
+        return period
