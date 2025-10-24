@@ -4,6 +4,10 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 log_dir="$script_dir/logs"
+
+# Ensure logs directory exists
+mkdir -p "$log_dir"
+
 args_file="$script_dir/args"
 pass_file="$script_dir/pass"
 
