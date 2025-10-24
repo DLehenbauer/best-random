@@ -2,44 +2,45 @@
 
 #include <stdint.h>
 
-#ifndef COUNT_OF
-#define COUNT_OF(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
-#endif
+typedef uint32_t rng_state_t;
+typedef uint32_t rng_out_t;
 
 // Modern GCC/CLang reduce these to a single instruction on x86/x64.
 static inline uint32_t rol32(uint32_t v, int r) { r &= 31; return (v << r) | (v >> (32 - r)); }
 
-static uint32_t s[4] = { 0 };
+static rng_state_t s[4] = { 0 };
 static unsigned int p[6] = { 0 };
 
 // Operation functions: shr, shl, rol
-static inline uint32_t op_shr(uint32_t v, unsigned int r) { return v >> r; }
-static inline uint32_t op_shl(uint32_t v, unsigned int r) { return v << r; }
-static inline uint32_t op_rol(uint32_t v, unsigned int r) { return rol32(v, r); }
+static inline rng_out_t op_shr(rng_state_t v, unsigned int r) { return v >> r; }
+static inline rng_out_t op_shl(rng_state_t v, unsigned int r) { return v << r; }
+static inline rng_out_t op_rol(rng_state_t v, unsigned int r) { return rol32(v, r); }
+
+typedef rng_out_t (*rng_op_func_t)(rng_state_t, unsigned int);
 
 // Function pointer table for operations (indexed by operation code)
-static uint32_t (*const ops[])(uint32_t, unsigned int) = {
+static rng_op_func_t const ops[] = {
     op_shr,  // 0: shr (>>)
     op_shl,  // 1: shl (<<)
     op_rol   // 2: rol (rotate left)
 };
 
-static inline uint32_t next(void) {
-    // Save x (s[0]) before shifting state
-    uint32_t t = s[0];
-    
-    // Shift state: x=y, y=z, z=w
+static inline rng_out_t next(void) {
+    const rng_op_func_t op1 = ops[p[0]];
+    const rng_op_func_t op2 = ops[p[1]];
+    const rng_op_func_t op3 = ops[p[2]];
+
+    const unsigned int sh1 = p[3];
+    const unsigned int sh2 = p[4];
+    const unsigned int sh3 = p[5];
+
+    rng_state_t t = s[0];   
+    t ^= op1(t, sh1);
+    t ^= op2(t, sh2);
+    t ^= op3(s[3], sh3);
     s[0] = s[1];
     s[1] = s[2];
     s[2] = s[3];
-    
-    // Apply three XOR operations with configurable operations and shift amounts
-    // op[0..2] = p[0..2], r[0..2] = p[3..5]
-    t ^= ops[p[0]](t, p[3]);      // First XOR: t ^= op(p[0], t, p[3])
-    t ^= ops[p[1]](t, p[4]);      // Second XOR: t ^= op(p[1], t, p[4])
-    t ^= ops[p[2]](s[3], p[5]);   // Third XOR: t ^= op(p[2], s[3], p[5])
-    
-    // Set w = t
     s[3] = t;
     
     return t;
