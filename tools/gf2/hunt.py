@@ -6,7 +6,7 @@ Hunt for linear-GF2 PRNGs with maximal period.
 
 import itertools
 import multiprocessing as mp
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from gf2 import XorshiftAnalyzer
 
 bit_width = 32
@@ -64,7 +64,21 @@ def get_analyzer():
         _analyzer = XorshiftAnalyzer(state_size=state_size, bit_width=bit_width)
     return _analyzer
 
-def test(op, a, b, r):
+def test(params):
+    """
+    Test a single parameter combination.
+    
+    Args:
+        params: Tuple of (op, a, b, r) where:
+            op: operation codes tuple
+            a: 'a' indices tuple
+            b: 'b' indices tuple  
+            r: shift amounts tuple
+    
+    Returns:
+        Tuple of (success, op, a, b, r) where success is True if maximal period found
+    """
+    op, a, b, r = params
     analyzer = get_analyzer()
     
     # Helper to perform an operation chosen by integer code:
@@ -92,15 +106,32 @@ def test(op, a, b, r):
         return s
 
     result = analyzer.check(next_state_func)
-    return result == analyzer.max_period
+    is_max_period = result == analyzer.max_period
+    
+    # Return result with parameters so we can identify successful combinations
+    return (is_max_period, params)
 
 if __name__ == "__main__":
+    import time
+    start_time = time.time()
+    
+    def format_time(seconds):
+        """Format seconds into friendly time units."""
+        if seconds < 60:
+            return f"{seconds:.0f}s"
+        elif seconds < 3600:
+            return f"{seconds/60:.1f}m"
+        elif seconds < 86400:
+            return f"{seconds/3600:.1f}h"
+        else:
+            return f"{seconds/86400:.1f}d"
+    
     print(f"--- BEGIN: (bit_width={bit_width}, state_size={state_size})", flush=True)
 
     # Calculate total search space for progress reporting
-    num_op_kinds = 3
-    num_ops = 3
-    op_arg_start = 1
+    num_op_kinds = 3  # 0 = shr, 1 = shl, 2 = rol
+    num_ops = 3       # number of variable operations in next_state_func search
+    op_arg_start = 0
     op_arg_end = 33
     num_op_arg_values = op_arg_end - op_arg_start
 
@@ -127,59 +158,104 @@ if __name__ == "__main__":
     
     print(f"Valid operation combinations: {len(all_op_combos)} out of {len(all_possible_ops)} total")
 
-    total_op_arg_combos = num_op_arg_values ** num_ops  # 32,768 shift combinations per operation set
+    total_op_arg_combos = num_op_arg_values ** num_ops
     total_ab_combos = len(all_ab_combos)
     total_op_combos = len(all_op_combos)
     total_tests = total_ab_combos * total_op_combos * total_op_arg_combos
     print(f"Total search space: {total_ab_combos} (a,b) combinations × {total_op_combos} operation combinations × {total_op_arg_combos} shift combinations = {total_tests:,} tests")
 
-    # Use ProcessPoolExecutor for parallel execution
-    MAX_IN_FLIGHT = 64
-    test_count = 0
-    found_count = 0
-    
-    with ProcessPoolExecutor(max_workers=mp.cpu_count()) as executor:
-        futures = []  # Track submitted tasks
+    # Create a lazy generator for test parameters to avoid using excessive memory
+    # This generates combinations on-the-fly as they're consumed by worker processes
+    def generate_test_params():
+        """
+        Lazy generator for test parameter combinations.
         
-        for ab_idx, (a_indices, b_indices) in enumerate(all_ab_combos):
-            print(f"\nTesting (a, b) combination {ab_idx + 1}/{total_ab_combos}: a={a_indices}, b={b_indices}", flush=True)
-            
-            for op_idx, op in enumerate(all_op_combos):
-                if op_idx % 5 == 0:  # Report progress every 5 op combinations
-                    print(f"  Operation combination {op_idx + 1}/{total_op_combos}: {op}", flush=True)
-                    
+        Yields tuples of (op, a_indices, b_indices, r) without storing them all in memory.
+        This is memory-efficient for large search spaces.
+        """
+        for a_indices, b_indices in all_ab_combos:
+            for op in all_op_combos:
                 for r in itertools.product(range(op_arg_start, op_arg_end), repeat=num_ops):
-                    future = executor.submit(test, op, a_indices, b_indices, r)
-                    futures.append((future, op, a_indices, b_indices, r, test_count))
-                    test_count += 1
-                    
-                    # Limit number of tasks in flight
-                    if len(futures) >= MAX_IN_FLIGHT:
-                        # Process completed tasks
-                        completed_futures = []
-                        for fut, op_val, a_val, b_val, r_val, count in futures:
-                            if fut.done():
-                                ok = fut.result()
-                                if ok:
-                                    found_count += 1
-                                    print(f"FOUND #{found_count}: a={a_val}, b={b_val}, op={op_val}, r={r_val}", flush=True)
-                                
-                                # Progress reporting every 10000 tests
-                                if count % 10000 == 0:
-                                    progress = (count / total_tests) * 100
-                                    print(f"Progress: {count:,}/{total_tests:,} ({progress:.2f}%) - Found: {found_count}", flush=True)
-                            else:
-                                completed_futures.append((fut, op_val, a_val, b_val, r_val, count))
-                        futures = completed_futures
+                    yield (op, a_indices, b_indices, r)
+    
+    print(f"Using lazy generation for {total_tests:,} test parameter combinations", flush=True)
+    
+    # Use ProcessPoolExecutor with a simple and efficient submission pattern
+    test_count = 0
+    found_count = 0    
+    
+    num_workers = mp.cpu_count()
+    print(f"Starting parallel execution with {num_workers} workers...", flush=True)
+    
+    # Limit in-flight tasks to balance memory usage and parallelism
+    # This many tasks allows good pipeline depth without excessive memory
+    MAX_IN_FLIGHT = num_workers * 100
+    
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+        print(f"Using MAX_IN_FLIGHT={MAX_IN_FLIGHT} for efficient pipeline", flush=True)
         
-        # Process remaining futures
-        for fut, op_val, a_val, b_val, r_val, count in futures:
-            ok = fut.result()
-            if ok:
-                found_count += 1
-                print(f"FOUND #{found_count}: a={a_val}, b={b_val}, op={op_val}, r={r_val}", flush=True)
+        # Create parameter generator
+        param_generator = generate_test_params()
+        
+        # Use a set for O(1) removal of completed futures
+        pending = set()
+        
+        # Helper to submit one task
+        def submit_one():
+            try:
+                params = next(param_generator)
+                pending.add(executor.submit(test, params))
+                return True
+            except StopIteration:
+                return False
+        
+        # Fill initial pipeline
+        for _ in range(MAX_IN_FLIGHT):
+            if not submit_one():
+                break
+        
+        print(f"Submitted initial batch of {len(pending)} tasks", flush=True)
+        
+        # Process results as they complete, submitting replacements in batches
+        # This keeps workers fully utilized and amortizes iterator recreation cost
+        while pending:
+            # Collect all completed futures in this iteration
+            # This amortizes iterator recreation cost across multiple completions
+            completed = []
+            for completed_future in as_completed(pending):
+                completed.append(completed_future)
+                submit_one()
+            
+            # Process all completed futures
+            for completed_future in completed:
+                # Remove the completed future from pending set
+                pending.discard(completed_future)
 
+                # Process the completed future
+                is_max_period, params = completed_future.result()
+                test_count += 1
+                
+                if is_max_period:
+                    found_count += 1
+                    print(f"FOUND #{found_count}: params={params}", flush=True)
+                
+                # Progress reporting
+                if test_count % 10000 == 0:
+                    progress = (test_count / total_tests) * 100
+                    elapsed = time.time() - start_time
+                    rate = test_count / elapsed if elapsed > 0 else 0
+                    eta_seconds = (total_tests - test_count) / rate if rate > 0 else 0
+                    eta_str = format_time(eta_seconds)
+                    elapsed_str = format_time(elapsed)
+                    print(f"Progress: {test_count:,}/{total_tests:,} ({progress:.2f}%) - Found: {found_count} - Elapsed: {elapsed_str} - Rate: {rate:.0f} tests/s - ETA: {eta_str}", flush=True)
+    
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    elapsed_str = format_time(elapsed_time)
+    
     print(f"\n=== SEARCH COMPLETE ===")
     print(f"Total tests: {test_count:,}")
     print(f"Full-period generators found: {found_count}")
     print(f"Success rate: {(found_count/test_count)*100:.3f}%" if test_count > 0 else "N/A")
+    print(f"Elapsed time: {elapsed_str}")
+    print(f"Average rate: {test_count/elapsed_time:.0f} tests/s" if elapsed_time > 0 else "N/A")
