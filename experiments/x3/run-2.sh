@@ -40,7 +40,7 @@ test_core () {
         cleanupCmd=""
     fi
     
-    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null $cleanupCmd" \
+    cat $argsFile | parallel --colsep ' ' --workDir $workDir "mkdir -p '$logDir/{1}/{2}' && $rng -p0 {1} -p1 {2} | stdbuf -oL -eL $bin $sizeBytes $reportArg && node $filterScript $logDir {1} {2} | tee -a $passFile > /dev/null $cleanupCmd" \
        && cp $argsFile $argsFile.bak \
        && cp $passFile $passFile.bak \
        && cat $passFile | sort -g | uniq > $argsFile \
@@ -114,7 +114,7 @@ echo "[$(date '+%m/%d %T')]: Begin" | tee -a run.log
 #       full size in mcp.
 #
 # 'lownda': chi-square on low nibble distribution.  Operates on the low 4 bits of each 32 bit
-#           word.  'lownda' runs at 1/2 size in mcp.
+#           word.  'lownda' runs at 1/2 size in mcp.  Sometimes rejects candidates at larger sizes.
 
 #reset | tee -a run.log
 #test "mod3" $size_tiny true && \
@@ -124,10 +124,9 @@ echo "[$(date '+%m/%d %T')]: Begin" | tee -a run.log
 #test "mod3" $size_big true && \
 #test "z9" $size_big true && \
 #test "mod3" $size_huge true && \
-test "z9" $size_huge true && \
-test "lownda" $size_huge true && \
-test "mod3" $size_tera false && \
-test "z9" $size_tera true && \
+#test "z9" $size_huge true && \
+#test "mod3" $size_tera false && \
+test "z9" $size_tera false && \
 test "lownda" $size_tera false && \
 test "mcp" $size_tera false
 
