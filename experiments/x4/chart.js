@@ -245,13 +245,10 @@ function main() {
     
     // Get list of existing log files
     const existingFiles = fs.readdirSync(logDir)
-        .filter(file => file.endsWith('.log'))
-        .map(file => parseInt(file.replace('.log', '')))
-        .filter(num => !isNaN(num))
-        .sort((a, b) => a - b);
-    
-    for (const i of existingFiles) {
-        const r = parseLog(path.join(logDir, i + '.log'));
+        .filter(file => file.endsWith('.log'));
+
+    for (const file of existingFiles) {
+        const r = parseLog(path.join(logDir, file));
         parsed.push(r);
         if (r.finalBytes != null && !isNaN(r.finalBytes) && r.finalBytes > maxBytes) {
             maxBytes = r.finalBytes;
