@@ -133,17 +133,19 @@ static int parse_params(int argc, char* argv[], int startIndex, bool* haveParams
 }
 
 static void dump_state(void) {
-    fprintf(stderr, "Seed state (%zu x %zub):", (size_t)COUNT_OF(s), (size_t)sizeof(s[0]));
+    fprintf(stderr, "Seed state (%zu x %zub):", (size_t)COUNT_OF(s), (size_t)sizeof(s[0]) * 8);
     for (size_t i = 0; i < COUNT_OF(s); i++) {
         fprintf(stderr, " %ju", (uintmax_t)s[i]);
     }
     fprintf(stderr, "\n");
 
-    fprintf(stderr, "Parameter state (%zu x %zub):", (size_t)COUNT_OF(p), (size_t)sizeof(p[0]));
-    for (size_t i = 0; i < COUNT_OF(p); i++) {
-        fprintf(stderr, " %ju", (uintmax_t)p[i]);
+    if (COUNT_OF(p) > 0) {
+        fprintf(stderr, "Parameters (%zu x %zub):", (size_t)COUNT_OF(p), (size_t)sizeof(p[0]) * 8);
+        for (size_t i = 0; i < COUNT_OF(p); i++) {
+            fprintf(stderr, " %ju", (uintmax_t)p[i]);
+        }
+        fprintf(stderr, "\n");
     }
-    fprintf(stderr, "\n");
 }
 
 static bool parseArgs(int argc, char* argv[]) {

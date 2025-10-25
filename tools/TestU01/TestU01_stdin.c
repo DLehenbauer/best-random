@@ -105,13 +105,12 @@ unif01_Gen *createGenerator()
 
 uint32_t remainingIterations = 1;
 double testToTotalConfidence[201] = {0};
-uint32_t testToTotalFailures[201] = {0};
+uint32_t testToTotalSuspects[201] = {0};
 double totalIterationsRun = 0;
-double totalIterationsFailed = 0;
+double totalIterationsSuspect = 0;
 double totalCasesRun = 0;
 double totalCasesUnusual = 0;
-double totalCasesSuspicious = 0;
-double totalCasesFailed = 0;
+double totalCasesSuspect = 0;
 
 // Mirrors two-sided p-values to the left side.  The result is a number in the range [0, 0.5],
 // with 0.5 being the most probable.
@@ -175,8 +174,7 @@ static int sorted_result_cmp_delta(const void *left, const void *right)
 unif01_Gen *gen = NULL;
 
 void displayResults(char* name, struct sorted_result_t* results, bool all) {
-    int numFailed     = 0;
-    int numSuspicious = 0;
+    int numSuspect    = 0;
     int numUnusual    = 0;
 
     bool printHeader = true;
@@ -186,18 +184,13 @@ void displayResults(char* name, struct sorted_result_t* results, bool all) {
         uint32_t index = results[i].index;
         double confidence   = getConfidence(index);
         double delta        = getPValueDelta(index);
-        bool testFailed     = delta < gofw_Suspectp;
-        bool testSuspicious = !testFailed && delta < 0.0025;
-        bool testUnusual    = !testSuspicious && delta < 0.01;
+        bool testSuspect    = delta < gofw_Suspectp;
+        bool testUnusual    = !testSuspect && delta < 0.01;
 
-        if (testFailed)
+        if (testSuspect)
         {
-            testToTotalFailures[index]++;
-            numFailed++;
-        }
-        else if (testSuspicious)
-        {
-            numSuspicious++;    
+            testToTotalSuspects[index]++;
+            numSuspect++;
         }
         else if (testUnusual)
         {
@@ -209,47 +202,43 @@ void displayResults(char* name, struct sorted_result_t* results, bool all) {
         }
 
         if (printHeader) {
-            printf("    avg conf  fail  test                           p-value   confidence\n");
+            printf("    avg conf  suspect  test                           p-value   confidence\n");
             printHeader = false;
         }
 
-        printf("    %f  %4d  %-30s %f  %f %-15s\n",
+        printf("    %f  %7d  %-30s %f  %f %-15s\n",
                getAvgConfidence(index),
-               testToTotalFailures[index],
+               testToTotalSuspects[index],
                bbattery_TestNames[index],
                bbattery_pVal[index],
                confidence,
-               testFailed
-                   ? "    FAIL!"
-               : testSuspicious
-                   ? "    suspicious"
+               testSuspect
+                   ? "    SUSPECT"
                : testUnusual
                    ? "    unusual"
                    : "");
     }
 
-    if (numFailed > 0) {
-        totalIterationsFailed++;
+    if (numSuspect > 0) {
+        totalIterationsSuspect++;
     }
 
     totalCasesRun += bbattery_NTests;
-    totalCasesFailed += numFailed;
-    totalCasesSuspicious += numSuspicious;
+    totalCasesSuspect += numSuspect;
     totalCasesUnusual += numUnusual;
 
     printf("\n%s %s: Passed %d/%d iterations (%.2f%%)%s\n",
         gen->name,
         name,
-        (uint32_t) (totalIterationsRun - totalIterationsFailed),
+        (uint32_t) (totalIterationsRun - totalIterationsSuspect),
         (uint32_t) totalIterationsRun,
-        ((totalIterationsRun - totalIterationsFailed) / totalIterationsRun) * 100,
-        numFailed == 0
+        ((totalIterationsRun - totalIterationsSuspect) / totalIterationsRun) * 100,
+        numSuspect == 0
             ? ""
-            : " - FAIL!");
+            : " - SUSPECT");
 
-    printf("  Total case failure rate: %.2f%% (suspicious: %.2f%%, unusual: %.2f%%)\n",
-        (totalCasesFailed / totalCasesRun) * 100,
-        (totalCasesSuspicious / totalCasesRun) * 100,
+    printf("  Total case suspect rate: %.2f%% (unusual: %.2f%%)\n",
+        (totalCasesSuspect / totalCasesRun) * 100,
         (totalCasesUnusual / totalCasesRun) * 100);
 }
 
@@ -383,5 +372,5 @@ int main(int argc, char *argv[])
     while ((--remainingIterations) > 0);
 
     printf("\n");
-    return totalIterationsFailed > 0 ? 1 : 0;
+    return totalIterationsSuspect > 0 ? 1 : 0;
 }
