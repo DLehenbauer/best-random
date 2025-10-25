@@ -1,6 +1,7 @@
 # Define the RNG executable path as absolute path based on makefile location
 MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 RNG_EXEC := $(MAKEFILE_DIR)rng
+COMMON_DIR := $(MAKEFILE_DIR)../../common/
 
 # Define the tools directory path
 TOOLS_DIR := ../../../tools
@@ -9,10 +10,10 @@ TOOLS_DIR := ../../../tools
 RNG := stdbuf -o 4K $(RNG_EXEC)
 
 all:
-	gcc -std=c99 -Wall -Werror -O3 -fomit-frame-pointer -march=native -mtune=native -o $(RNG_EXEC) main.c
+	gcc -std=c99 -Wall -Werror -O3 -fomit-frame-pointer -march=native -mtune=native -o $(RNG_EXEC) $(COMMON_DIR)main.c -I $(MAKEFILE_DIR)
 
 debug:
-	gcc -std=c99 -Wall -Werror -g3 -O0 -DDEBUG -fno-omit-frame-pointer -march=native -mtune=native -o $(RNG_EXEC) main.c
+	gcc -std=c99 -Wall -Werror -g3 -O0 -DDEBUG -fno-omit-frame-pointer -march=native -mtune=native -o $(RNG_EXEC) $(COMMON_DIR)main.c -I $(MAKEFILE_DIR)
 
 practrand: all
 	$(RNG) -i | $(TOOLS_DIR)/PractRand/RNG_test stdin64 -multithreaded -tlmax 8192PB
