@@ -1,142 +1,217 @@
 #!/usr/bin/env python3
 
 """
-Hunt for XSADD-style PRNGs with 32-bit x 4 state - EXHAUSTIVE SEARCH.
-
-This script performs a comprehensive search for pseudorandom number generators that follow 
-the XSADD pattern:
-- 4 x 32-bit state variables (x, y, z, w)  
-- State shift: x->y, y->z, z->w
-- Three XOR operations on the old x value: t^=t<<A; t^=t>>B; t^=w<<C
-- New w = t
-- Output typically w + z (not tested here, just the state transition)
-
-SEARCH SPACE:
-- All 27 combinations of operations: shr(>>), shl(<<), rol(rotate left)  
-- All shift amounts from 1 to 31 for each of the 3 operations
-- Total: 27 × 31³ = 804,357 configurations
-
-The original XSADD uses shifts of 15, 18, 11 with operations <<, >>, <<.
-This exhaustive search finds ALL variants that achieve maximum period.
+Hunt for linear-GF2 PRNGs with maximal period.
 """
 
 import itertools
 import multiprocessing as mp
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from gf2 import XorshiftAnalyzer
 
 bit_width = 32
-state_size = 4
+state_size = 3
 
-def test(op, r, config):
-    a = XorshiftAnalyzer(state_size=state_size, bit_width=bit_width)
+def is_valid_op_combination(op):
+    """
+    Check if an operation combination could produce a maximal period generator.
+    
+    Rules:
+    1. Cannot have all operations be the same non-rotate shift:
+       - All right shifts (>>): MSBs never receive feedback from LSBs
+       - All left shifts (<<): LSBs never receive feedback from MSBs
+    2. All rotates might work, so we allow that case
+    """
+    # Check if all operations are the same
+    if len(set(op)) == 1:
+        op_type = op[0]
+        # 0 = shr (>>), 1 = shl (<<), 2 = rol (rotate)
+        if op_type == 0 or op_type == 1:
+            # All right shifts or all left shifts - bits will be stuck
+            return False
+    
+    return True
 
+# Create analyzer lazily per-process to avoid pickling issues
+_analyzer = None
+
+def get_analyzer():
+    global _analyzer
+    if _analyzer is None:
+        _analyzer = XorshiftAnalyzer(state_size=state_size, bit_width=bit_width)
+    return _analyzer
+
+def test(params):
+    """
+    Test a single parameter combination.
+    
+    Args:
+        params: Tuple of (op, a, b, r) where:
+            op: operation codes tuple
+            r: shift amounts tuple
+    
+    Returns:
+        Tuple of (success, op, a, b, r) where success is True if maximal period found
+    """
+    op, r = params
+    analyzer = get_analyzer()
+    
     # Helper to perform an operation chosen by integer code:
     #   0: shr (>>)
     #   1: shl (<<)
     #   2: rol (rotate left)
     def o(code, value, shift_amount):
         if code == 0:
-            return a.shr(value, shift_amount)
+            return analyzer.shr(value, shift_amount)
         elif code == 1:
-            return a.shl(value, shift_amount)
+            return analyzer.shl(value, shift_amount)
         elif code == 2:
-            return a.rol(value, shift_amount)
+            return analyzer.rol(value, shift_amount)
         else:
             raise ValueError(f"Invalid operation code: {code}")
 
-    # Computes the next state of our XSADD-style generator
-    # Original XSADD: t=x; x=y; y=z; z=w; t^=t<<15; t^=t>>18; t^=w<<11; w=t; return w+z
+    # Computes the next state
     def next_state_func(s):
-        sh1 = r[0]
-        sh2 = r[1]
-        sh3 = r[2]
-        
         t = s[0]
-        t ^= o(op[0], t, sh1)
-        t ^= o(op[1], t, sh2)
-        t ^= o(op[2], s[3], sh3)
+        t ^= o(op[0], t, r[0])
+        t ^= o(op[1], t, r[1])
+        t ^= o(op[2], s[2], r[2])
 
         s[0] = s[1]
         s[1] = s[2]
-        s[2] = s[3]
-        s[3] = t
+        s[2] = t
         
         return s
 
-    result = a.check(next_state_func)
-    return (result.period == a.max_period)
+    result = analyzer.check(next_state_func)
+    is_max_period = result == analyzer.max_period
+    
+    # Return result with parameters so we can identify successful combinations
+    return (is_max_period, params)
 
 if __name__ == "__main__":
+    import time
+    start_time = time.time()
+    
+    def format_time(seconds):
+        """Format seconds into friendly time units."""
+        if seconds < 60:
+            return f"{seconds:.0f}s"
+        elif seconds < 3600:
+            return f"{seconds/60:.1f}m"
+        elif seconds < 86400:
+            return f"{seconds/3600:.1f}h"
+        else:
+            return f"{seconds/86400:.1f}d"
+    
     print(f"--- BEGIN: (bit_width={bit_width}, state_size={state_size})", flush=True)
 
-    # For XSADD-style generators, we don't need complex permutations
-    # Just test the basic algorithm structure
-    def simple_configs():
-        yield None  # Single configuration to test
-
     # Calculate total search space for progress reporting
-    total_ops = 3**3  # 27 operation combinations
-    total_shifts = 31**3  # 29,791 shift combinations per operation set
-    total_tests = total_ops * total_shifts
-    print(f"Total search space: {total_ops} operation combinations × {total_shifts} shift combinations = {total_tests:,} tests")
+    # For 1x32-bit xorshift with 3 operations: 3^3 operation combinations × 33^3 shift amounts
+    num_op_kinds = 3  # shr, shl, rol
+    num_ops = 3       # number of operations to apply in sequence
+    op_arg_start = 0
+    op_arg_end = 33
+    num_op_arg_values = op_arg_end - op_arg_start
 
-    # Use ProcessPoolExecutor for parallel execution
-    MAX_IN_FLIGHT = 64
-    test_count = 0
-    found_count = 0
+    total_tests = (num_op_kinds ** num_ops) * (num_op_arg_values ** num_ops)
+    print(f"Total search space: {num_op_kinds}^{num_ops} operation combinations × {num_op_arg_values}^{num_ops} shift combinations = {total_tests:,} tests")
+
+    # Create a lazy generator for test parameters to avoid using excessive memory
+    # This generates combinations on-the-fly as they're consumed by worker processes
+    def generate_test_params():
+        """
+        Lazy generator for test parameter combinations.
+        
+        Generates all combinations of 3 operations (each can be shr, shl, or rol)
+        with all combinations of 3 shift amounts.
+        
+        Yields tuples of (op, r) where:
+        - op is a tuple of 3 operation codes
+        - r is a tuple of 3 shift amounts
+        """
+        for op_combo in itertools.product(range(num_op_kinds), repeat=num_ops):
+            for shift_combo in itertools.product(range(op_arg_start, op_arg_end), repeat=num_ops):
+                yield (op_combo, shift_combo)
     
-    with ProcessPoolExecutor(max_workers=mp.cpu_count()) as executor:
-        # Search for XSADD-style patterns with 3 operations:
-        # op[0]: first op on t, op[1]: second op on t, op[2]: op on w
-        # Test all permutations of operations: 0=shr(>>), 1=shl(<<), 2=rol(rotate left)
+    print(f"Using lazy generation for {total_tests:,} test parameter combinations", flush=True)
+    
+    # Use ProcessPoolExecutor with a simple and efficient submission pattern
+    test_count = 0
+    found_count = 0    
+    
+    num_workers = mp.cpu_count()
+    print(f"Starting parallel execution with {num_workers} workers...", flush=True)
+    
+    # Limit in-flight tasks to balance memory usage and parallelism
+    # This many tasks allows good pipeline depth without excessive memory
+    MAX_IN_FLIGHT = num_workers * 100
+    
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+        print(f"Using MAX_IN_FLIGHT={MAX_IN_FLIGHT} for efficient pipeline", flush=True)
         
-        futures = []  # Track submitted tasks
+        # Create parameter generator
+        param_generator = generate_test_params()
         
-        for op_idx, op in enumerate(itertools.product(range(0, 3), repeat=3)):
-            print(f"Testing operation combination {op_idx + 1}/{total_ops}: {op}", flush=True)
+        # Use a set for O(1) removal of completed futures
+        pending = set()
+        
+        # Helper to submit one task
+        def submit_one():
+            try:
+                params = next(param_generator)
+                pending.add(executor.submit(test, params))
+                return True
+            except StopIteration:
+                return False
+        
+        # Fill initial pipeline
+        for _ in range(MAX_IN_FLIGHT):
+            if not submit_one():
+                break
+        
+        print(f"Submitted initial batch of {len(pending)} tasks", flush=True)
+        
+        # Process results as they complete, submitting replacements in batches
+        # This keeps workers fully utilized and amortizes iterator recreation cost
+        while pending:
+            # Collect all completed futures in this iteration
+            # This amortizes iterator recreation cost across multiple completions
+            completed = []
+            for completed_future in as_completed(pending):
+                completed.append(completed_future)
+                submit_one()
+            
+            # Process all completed futures
+            for completed_future in completed:
+                # Remove the completed future from pending set
+                pending.discard(completed_future)
 
-            # Test full range of 32-bit operations.  We skip zero because Rotate/Shift of 0 will result in t ^ t.
-            # We include 32 because a shift of 32 results in t ^ 0, which covers also covers generators with fewer ops.
-            for r1 in range(1, 33):
-                for r2 in range(1, 33):
-                    for r3 in range(1, 33):
-                        r = (r1, r2, r3)
-                        
-                        # Submit task for parallel execution
-                        config_iter = simple_configs()
-                        for config in config_iter:
-                            future = executor.submit(test, op, r, config)
-                            futures.append((future, op, r, test_count))
-                            test_count += 1
-                            
-                            # Limit number of tasks in flight
-                            if len(futures) >= MAX_IN_FLIGHT:
-                                # Process completed tasks
-                                completed_futures = []
-                                for fut, op_val, r_val, count in futures:
-                                    if fut.done():
-                                        ok = fut.result()
-                                        if ok:
-                                            found_count += 1
-                                            print(f"FOUND #{found_count}: op={op_val}, r={r_val}", flush=True)
-                                        
-                                        # Progress reporting every 1000 tests
-                                        if count % 1000 == 0:
-                                            progress = (count / total_tests) * 100
-                                            print(f"Progress: {count:,}/{total_tests:,} ({progress:.1f}%) - Found: {found_count}", flush=True)
-                                    else:
-                                        completed_futures.append((fut, op_val, r_val, count))
-                                futures = completed_futures
-        
-        # Process remaining futures
-        for fut, op_val, r_val, count in futures:
-            ok = fut.result()
-            if ok:
-                found_count += 1
-                print(f"FOUND #{found_count}: op={op_val}, r={r_val}", flush=True)
-
+                # Process the completed future
+                is_max_period, params = completed_future.result()
+                test_count += 1
+                
+                if is_max_period:
+                    found_count += 1
+                    print(f"FOUND #{found_count}: params={params}", flush=True)
+                
+                # Progress reporting
+                if test_count % 10000 == 0:
+                    progress = (test_count / total_tests) * 100
+                    elapsed = time.time() - start_time
+                    rate = test_count / elapsed if elapsed > 0 else 0
+                    eta_seconds = (total_tests - test_count) / rate if rate > 0 else 0
+                    eta_str = format_time(eta_seconds)
+                    elapsed_str = format_time(elapsed)
+                    print(f"Progress: {test_count:,}/{total_tests:,} ({progress:.2f}%) - Found: {found_count} - Elapsed: {elapsed_str} - Rate: {rate:.0f} tests/s - ETA: {eta_str}", flush=True)
+    
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    elapsed_str = format_time(elapsed_time)
+    
     print(f"\n=== SEARCH COMPLETE ===")
     print(f"Total tests: {test_count:,}")
     print(f"Full-period generators found: {found_count}")
     print(f"Success rate: {(found_count/test_count)*100:.3f}%" if test_count > 0 else "N/A")
+    print(f"Elapsed time: {elapsed_str}")
+    print(f"Average rate: {test_count/elapsed_time:.0f} tests/s" if elapsed_time > 0 else "N/A")

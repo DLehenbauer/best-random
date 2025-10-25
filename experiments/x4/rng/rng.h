@@ -3,45 +3,52 @@
 #include <stdint.h>
 
 typedef uint32_t rng_state_t;
-typedef uint32_t rng_out_t;
+typedef uint64_t rng_out_t;
 
 // Modern GCC/CLang reduce these to a single instruction on x86/x64.
 static inline uint32_t rol32(uint32_t v, int r) { r &= 31; return (v << r) | (v >> (32 - r)); }
 
-static rng_state_t s[4] = { 0 };
-static unsigned int p[6] = { 0 };
+static rng_state_t s[3] = { 0 };
 
-// Operation functions: shr, shl, rol
-static inline rng_out_t op_shr(rng_state_t v, unsigned int r) { return v >> r; }
-static inline rng_out_t op_shl(rng_state_t v, unsigned int r) { return v << r; }
-static inline rng_out_t op_rol(rng_state_t v, unsigned int r) { return rol32(v, r); }
+// p[0..5] = hi parameters: a, b, c, op1, op2, d
+// p[6..11] = lo parameters: a, b, c, op1, op2, d
+// where op1, op2: 0=+/^, 1=-
+// Note: op_add_or_xor uses + if a<=b, ^ if a>b (to avoid testing symmetric cases)
+static unsigned int p[12] = { 0 };
 
-typedef rng_out_t (*rng_op_func_t)(rng_state_t, unsigned int);
+// Combine operation functions
+static inline uint32_t op_add_or_xor(uint32_t a, uint32_t b) { return (a <= b) ? (a + b) : (a ^ b); }
+static inline uint32_t op_sub(uint32_t a, uint32_t b) { return a - b; }
 
-// Function pointer table for operations (indexed by operation code)
-static rng_op_func_t const ops[] = {
-    op_shr,  // 0: shr (>>)
-    op_shl,  // 1: shl (<<)
-    op_rol   // 2: rol (rotate left)
+typedef uint32_t (*combine_op_t)(uint32_t, uint32_t);
+
+// Function pointer table for combine operations
+static combine_op_t const combine_ops[] = {
+    op_add_or_xor,  // 0: + if a<=b, ^ if a>b
+    op_sub          // 1: -
 };
 
 static inline rng_out_t next(void) {
-    const rng_op_func_t op1 = ops[p[0]];
-    const rng_op_func_t op2 = ops[p[1]];
-    const rng_op_func_t op3 = ops[p[2]];
+    // hi = rol32(s[a] op1 s[b], c) op2 s[d]
+    const combine_op_t hi_op1 = combine_ops[p[3]];
+    const combine_op_t hi_op2 = combine_ops[p[4]];
+    rng_out_t hi = hi_op2(rol32(hi_op1(s[p[0]], s[p[1]]), p[2]), s[p[5]]);
+    
+    // lo = rol32(s[a] op1 s[b], c) op2 s[d]
+    const combine_op_t lo_op1 = combine_ops[p[9]];
+    const combine_op_t lo_op2 = combine_ops[p[10]];
+    uint32_t lo = lo_op2(rol32(lo_op1(s[p[6]], s[p[7]]), p[8]), s[p[11]]);
+    
+    rng_out_t result = (hi << 32) | lo;
 
-    const unsigned int sh1 = p[3];
-    const unsigned int sh2 = p[4];
-    const unsigned int sh3 = p[5];
-
-    rng_state_t t = s[0];   
-    t ^= op1(t, sh1);
-    t ^= op2(t, sh2);
-    t ^= op3(s[3], sh3);
+    rng_state_t t = s[0];
+    t ^= t >> 4;
+    t ^= t << 3;
+    t ^= rol32(s[2], 15);
+    
     s[0] = s[1];
     s[1] = s[2];
-    s[2] = s[3];
-    s[3] = t;
-    
-    return t;
+    s[2] = t;
+
+    return result;
 }
