@@ -12,29 +12,6 @@ from gf2 import XorshiftAnalyzer
 bit_width = 32
 state_size = 3
 
-def is_valid_combination(a, b):
-    """
-    Check if a combination of 'a' and 'b' indices could produce a maximal period generator.
-    
-    Rules:
-    1. Each state variable s[i] must receive feedback from at least one other state variable
-       (i.e., if a[i] == i, then b[i] must != i)
-    2. All state variables must be reachable (i.e., all indices 0, 1, 2 must appear in 'a' or 'b')
-    """
-    # Rule 1: Check that each output position receives feedback from other state variables
-    for i in range(state_size):
-        if a[i] == i and b[i] == i:
-            # s[i] = s[i] ^ op(s[i], shift) - only self-feedback, invalid
-            return False
-    
-    # Rule 2: Check that all state variables are used (reachable)
-    all_indices = set(a) | set(b)
-    if all_indices != set(range(state_size)):
-        # Not all state variables are used, so some are unreachable
-        return False
-    
-    return True
-
 def is_valid_op_combination(op):
     """
     Check if an operation combination could produce a maximal period generator.
@@ -71,14 +48,12 @@ def test(params):
     Args:
         params: Tuple of (op, a, b, r) where:
             op: operation codes tuple
-            a: 'a' indices tuple
-            b: 'b' indices tuple  
             r: shift amounts tuple
     
     Returns:
         Tuple of (success, op, a, b, r) where success is True if maximal period found
     """
-    op, a, b, r = params
+    op, r = params
     analyzer = get_analyzer()
     
     # Helper to perform an operation chosen by integer code:
@@ -97,12 +72,15 @@ def test(params):
 
     # Computes the next state
     def next_state_func(s):
-        a0, a1, a2 = s[a[0]], s[a[1]], s[a[2]]
-        b0, b1, b2 = s[b[0]], s[b[1]], s[b[2]]
+        t = s[0]
+        t ^= o(op[0], t, r[0])
+        t ^= o(op[1], t, r[1])
+        t ^= o(op[2], s[2], r[2])
 
-        s[0] = a0 ^ o(op[0], b0, r[0])
-        s[1] = a1 ^ o(op[1], b1, r[1])
-        s[2] = a2 ^ o(op[2], b2, r[2])
+        s[0] = s[1]
+        s[1] = s[2]
+        s[2] = t
+        
         return s
 
     result = analyzer.check(next_state_func)
@@ -129,40 +107,15 @@ if __name__ == "__main__":
     print(f"--- BEGIN: (bit_width={bit_width}, state_size={state_size})", flush=True)
 
     # Calculate total search space for progress reporting
-    num_op_kinds = 3  # 0 = shr, 1 = shl, 2 = rol
-    num_ops = 3       # number of variable operations in next_state_func search
+    # For 1x32-bit xorshift with 3 operations: 3^3 operation combinations × 33^3 shift amounts
+    num_op_kinds = 3  # shr, shl, rol
+    num_ops = 3       # number of operations to apply in sequence
     op_arg_start = 0
     op_arg_end = 33
     num_op_arg_values = op_arg_end - op_arg_start
 
-    # Generate all valid (a, b) combinations
-    all_ab_combos = []
-    all_possible_ab = list(itertools.product(
-        itertools.product(range(state_size), repeat=state_size),  # all 'a' combinations
-        itertools.product(range(state_size), repeat=state_size)   # all 'b' combinations
-    ))
-    
-    for a_indices, b_indices in all_possible_ab:
-        if is_valid_combination(a_indices, b_indices):
-            all_ab_combos.append((a_indices, b_indices))
-    
-    print(f"Valid (a, b) combinations: {len(all_ab_combos)} out of {len(all_possible_ab)} total")
-
-    # Generate all valid operation combinations
-    all_op_combos = []
-    all_possible_ops = list(itertools.product(range(0, num_op_kinds), repeat=num_ops))
-    
-    for op in all_possible_ops:
-        if is_valid_op_combination(op):
-            all_op_combos.append(op)
-    
-    print(f"Valid operation combinations: {len(all_op_combos)} out of {len(all_possible_ops)} total")
-
-    total_op_arg_combos = num_op_arg_values ** num_ops
-    total_ab_combos = len(all_ab_combos)
-    total_op_combos = len(all_op_combos)
-    total_tests = total_ab_combos * total_op_combos * total_op_arg_combos
-    print(f"Total search space: {total_ab_combos} (a,b) combinations × {total_op_combos} operation combinations × {total_op_arg_combos} shift combinations = {total_tests:,} tests")
+    total_tests = (num_op_kinds ** num_ops) * (num_op_arg_values ** num_ops)
+    print(f"Total search space: {num_op_kinds}^{num_ops} operation combinations × {num_op_arg_values}^{num_ops} shift combinations = {total_tests:,} tests")
 
     # Create a lazy generator for test parameters to avoid using excessive memory
     # This generates combinations on-the-fly as they're consumed by worker processes
@@ -170,13 +123,16 @@ if __name__ == "__main__":
         """
         Lazy generator for test parameter combinations.
         
-        Yields tuples of (op, a_indices, b_indices, r) without storing them all in memory.
-        This is memory-efficient for large search spaces.
+        Generates all combinations of 3 operations (each can be shr, shl, or rol)
+        with all combinations of 3 shift amounts.
+        
+        Yields tuples of (op, r) where:
+        - op is a tuple of 3 operation codes
+        - r is a tuple of 3 shift amounts
         """
-        for a_indices, b_indices in all_ab_combos:
-            for op in all_op_combos:
-                for r in itertools.product(range(op_arg_start, op_arg_end), repeat=num_ops):
-                    yield (op, a_indices, b_indices, r)
+        for op_combo in itertools.product(range(num_op_kinds), repeat=num_ops):
+            for shift_combo in itertools.product(range(op_arg_start, op_arg_end), repeat=num_ops):
+                yield (op_combo, shift_combo)
     
     print(f"Using lazy generation for {total_tests:,} test parameter combinations", flush=True)
     

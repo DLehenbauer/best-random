@@ -8,7 +8,7 @@ typedef uint32_t rng_out_t;
 // Modern GCC/CLang reduce these to a single instruction on x86/x64.
 static inline uint32_t rol32(uint32_t v, int r) { r &= 31; return (v << r) | (v >> (32 - r)); }
 
-static rng_state_t s[4] = { 0 };
+static rng_state_t s[3] = { 0 };
 static unsigned int p[6] = { 0 };
 
 // Operation functions: shr, shl, rol
@@ -30,18 +30,18 @@ static inline rng_out_t next(void) {
     const rng_op_func_t op2 = ops[p[1]];
     const rng_op_func_t op3 = ops[p[2]];
 
-    const unsigned int sh1 = p[3];
-    const unsigned int sh2 = p[4];
-    const unsigned int sh3 = p[5];
+    const unsigned int a0 = p[3];
+    const unsigned int a1 = p[4];
+    const unsigned int a2 = p[5];
 
-    rng_state_t t = s[0];   
-    t ^= op1(t, sh1);
-    t ^= op2(t, sh2);
-    t ^= op3(s[3], sh3);
+    rng_state_t t = s[0];    
+    t ^= op1(t, a0);
+    t ^= op2(t, a1);
+    t ^= op3(s[2], a2);
+    
     s[0] = s[1];
     s[1] = s[2];
-    s[2] = s[3];
-    s[3] = t;
+    s[2] = t;
     
-    return t;
+    return s[0] + s[1];
 }

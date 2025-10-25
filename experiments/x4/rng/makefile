@@ -15,8 +15,8 @@ all:
 debug:
 	gcc -std=c99 -Wall -Werror -g3 -O0 -DDEBUG -fno-omit-frame-pointer -march=native -mtune=native -o $(RNG_EXEC) $(COMMON_DIR)main.c -I $(MAKEFILE_DIR)
 
-pr12: all
-	$(RNG) | $(TOOLS_DIR)/PractRand/RNG_test stdin -multithreaded -te 1 -tf 2 -tlmax 8192PB
+pr32: all
+	$(RNG) | $(TOOLS_DIR)/PractRand/RNG_test stdin -multithreaded -tlmax 8192PB
 
 hwd: all
 	$(RNG) | $(TOOLS_DIR)/hwd/hwd
