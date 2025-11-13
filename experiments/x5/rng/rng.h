@@ -9,10 +9,23 @@ typedef uint64_t rng_out_t;
 static inline uint64_t rol64(uint64_t v, int r) { r &= 63; return (v << r) | (v >> (64 - r)); }
 
 static rng_state_t s[2] = { 0 };
-static unsigned int p[1] = { 0 };
 
-static inline void advance() {
-}
+// p[0..5] = mixing parameters: a, b, c, op1, op2, d
+// where op1, op2: 0=+/^, 1=-
+// Note: op_add_or_xor uses + if a<=b, ^ if a>b (to avoid testing symmetric cases)
+static unsigned int p[6] = { 0 };
+
+// Combine operation functions
+static inline uint64_t op_add_or_xor(uint64_t a, uint64_t b) { return (a <= b) ? (a + b) : (a ^ b); }
+static inline uint64_t op_sub(uint64_t a, uint64_t b) { return a - b; }
+
+typedef uint64_t (*combine_op_t)(uint64_t, uint64_t);
+
+// Function pointer table for combine operations
+static combine_op_t const combine_ops[] = {
+    op_add_or_xor,  // 0: + if a<=b, ^ if a>b
+    op_sub          // 1: -
+};
 
 static inline rng_out_t next() {
     const uint64_t s0 = s[0];
@@ -21,5 +34,14 @@ static inline rng_out_t next() {
     s[0] = s1 ^ (s0 >> 9);
     s[1] = s1 ^ rol64(s0, 35);
 
-    return rol64(s0 + s1, p[0]) + s1;
+    // Parameterized mixing: rol64(s[a] op1 s[b], c) op2 s[d]
+    // Since we only have s[0] and s[1], we map: a=0->s0, a=1->s1, d=0->s0, d=1->s1
+    const uint64_t sa = (p[0] == 0) ? s0 : s1;
+    const uint64_t sb = (p[1] == 0) ? s0 : s1;
+    const uint64_t sd = (p[5] == 0) ? s0 : s1;
+    
+    const combine_op_t op1 = combine_ops[p[3]];
+    const combine_op_t op2 = combine_ops[p[4]];
+    
+    return op2(rol64(op1(sa, sb), p[2]), sd);
 }

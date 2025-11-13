@@ -243,15 +243,13 @@ function main() {
     const parsed = [];
     let maxBytes = 0;
     
-    // Get list of existing log files
+    // Get list of existing log files (support arbitrary base names like 0_0_16_1_1_1.log)
     const existingFiles = fs.readdirSync(logDir)
         .filter(file => file.endsWith('.log'))
-        .map(file => parseInt(file.replace('.log', '')))
-        .filter(num => !isNaN(num))
-        .sort((a, b) => a - b);
-    
-    for (const i of existingFiles) {
-        const r = parseLog(path.join(logDir, i + '.log'));
+        .sort(); // lexicographic order; adjust if numeric ordering desired
+
+    for (const fname of existingFiles) {
+        const r = parseLog(path.join(logDir, fname));
         parsed.push(r);
         if (r.finalBytes != null && !isNaN(r.finalBytes) && r.finalBytes > maxBytes) {
             maxBytes = r.finalBytes;
@@ -265,11 +263,16 @@ function main() {
 
     console.log('HWD Log Severity Byte Chart (per-cell MAX severity, max final bytes=' + maxBytes.toExponential(3) + ')');
     console.log('');
-    console.log('File     Bar');
-    console.log('-------- ' + '-'.repeat(BAR_LEN));
+    const labelWidth = parsed.length
+        ? Math.min(Math.max(...parsed.map(r => r.file.length), 4), 24)
+        : 8;
+    console.log('File'.padEnd(labelWidth) + ' ' + 'Bar');
+    console.log('-'.repeat(labelWidth) + ' ' + '-'.repeat(BAR_LEN));
     for (const r of parsed) {
         const bar = buildBar(maxBytes, r.finalBytes, r.blocks, useColor);
-        const fileLabel = r.file.padEnd(8);
+        const fileLabel = r.file.length > labelWidth
+            ? r.file.slice(0, labelWidth - 1) + '…'
+            : r.file.padEnd(labelWidth);
         console.log(fileLabel + ' ' + bar);
     }
     console.log('');
