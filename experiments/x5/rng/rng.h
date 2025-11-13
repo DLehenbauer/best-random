@@ -10,21 +10,28 @@ static inline uint64_t rol64(uint64_t v, int r) { r &= 63; return (v << r) | (v 
 
 static rng_state_t s[2] = { 0 };
 
-// p[0..5] = mixing parameters: a, b, c, op1, op2, d
-// where op1, op2: 0=+/^, 1=-
-// Note: op_add_or_xor uses + if a<=b, ^ if a>b (to avoid testing symmetric cases)
+/* p[0..5] = mixing parameters: a, b, c, op1, op2, d
+ * op1/op2 codes:
+ *   0 = +
+ *   1 = ^
+ *   2 = -
+ * (+) and (^) are commutative; enumeration prunes a>b pairs.
+ * (-) is non-commutative; both permutations tested.
+ */
 static unsigned int p[6] = { 0 };
 
 // Combine operation functions
-static inline uint64_t op_add_or_xor(uint64_t a, uint64_t b) { return (a <= b) ? (a + b) : (a ^ b); }
+static inline uint64_t op_add(uint64_t a, uint64_t b) { return a + b; }
+static inline uint64_t op_xor(uint64_t a, uint64_t b) { return a ^ b; }
 static inline uint64_t op_sub(uint64_t a, uint64_t b) { return a - b; }
 
 typedef uint64_t (*combine_op_t)(uint64_t, uint64_t);
 
 // Function pointer table for combine operations
 static combine_op_t const combine_ops[] = {
-    op_add_or_xor,  // 0: + if a<=b, ^ if a>b
-    op_sub          // 1: -
+    op_add, // 0: +
+    op_xor, // 1: ^
+    op_sub  // 2: -
 };
 
 static inline rng_out_t next() {
