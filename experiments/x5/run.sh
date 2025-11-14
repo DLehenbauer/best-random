@@ -46,4 +46,4 @@ export log_dir rng_exec test
 rm -rf $log_dir
 mkdir -p $log_dir
 
-python3 "$script_dir/args.py" | parallel --joblog "$script_dir/parallel.log" --lb -C ' ' run_test {}
+cat args | parallel --joblog "$script_dir/parallel.log" --lb -C ' ' run_test {}

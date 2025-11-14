@@ -58,8 +58,8 @@ run_test() {
     size_ten_tera="10995116277760"  # 10 TB
     
     #execute_test MOD3-TINY $gjrand_mod3 $size_tiny 0 "$@" || return
-    execute_test MOD3-SMALL $gjrand_mod3 $size_small 0 "$@" || return
-    #execute_test MOD3-STANDARD $gjrand_mod3 $size_standard 1e-20 "$@" || return
+    #execute_test MOD3-SMALL $gjrand_mod3 $size_small 0 "$@" || return
+    execute_test MOD3-STANDARD $gjrand_mod3 $size_standard 1e-20 "$@" || return
     execute_test Z9-STANDARD $gjrand_z9 $size_standard 1e-20 "$@" || return
     
     # All tests passed - log to pass file
@@ -72,4 +72,4 @@ export rng_exec gjrand_testunif_dir hwd64 pass_file
 
 # Run tests in parallel
 python3 "$script_dir/args.py" | parallel --joblog "$script_dir/parallel.log" --lb --colsep ' ' run_test {}
-#cat args | parallel -j $(nproc) --lb --colsep ' ' run_test {}
+#cat args | parallel --joblog "$script_dir/parallel.log" --lb --colsep ' ' run_test {}

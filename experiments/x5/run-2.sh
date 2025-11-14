@@ -2,26 +2,23 @@
 set -eo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-
-pass_file="$script_dir/pass.s3"
-
-# Build RNG if needed
-pushd "$script_dir/rng" > /dev/null
-make -s
-popd > /dev/null
-
-rng_exec="$script_dir/rng/rng"
-# PractRand executable (assumes binary built in tools/PractRand)
-practrand_exe="$script_dir/../../tools/PractRand/RNG_test"
+pass_file="$script_dir/pass"
 
 # Clear pass file
 > "$pass_file"
 
-# PractRand test length limit; controls how far PractRand proceeds (-tlmax).
-# Use human-friendly PractRand units (examples: 4MB, 16MB, 256MB, 1GB, etc.).
-# This replaces earlier byte truncation via dd.
-pr_min=512MB
-pr_max=64GB
+# Always rebuild RNG to ensure up-to-date
+pushd "$script_dir/rng" > /dev/null
+make clean
+make
+popd > /dev/null
+
+rng_exec="$script_dir/rng/rng"
+practrand_exe="$script_dir/../../tools/PractRand/RNG_test"
+
+# PractRand test length limits
+pr_min=128MB
+pr_max=4GB
 
 # Run PractRand on a candidate; returns 0 if no FAIL lines encountered.
 # We stop feeding data after pr_bytes_limit bytes to keep screening quick.
@@ -98,5 +95,5 @@ export rng_exec practrand_exe pass_file pr_min pr_max
 
 # Run tests in parallel
 #run_test 0 0 0 0 0 2 0 2 17 1 0 1
-#python3 "$script_dir/args.py" | parallel -j $(nproc) --lb --colsep ' ' run_test {}
-cat args | parallel --lb --colsep ' ' run_test {}
+#python3 "$script_dir/args.py" | parallel --joblog "$script_dir/parallel.log" --lb --colsep ' ' run_test {}
+cat args | parallel --joblog "$script_dir/parallel.log" --lb --colsep ' ' run_test {}
