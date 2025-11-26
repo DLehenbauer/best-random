@@ -18,5 +18,5 @@ static inline rng_out_t next() {
     s[0] = s1 ^ (s0 >> 9);
     s[1] = s1 ^ rol64(s0, 35);
 
-    return rol64(s0 + s1, 44) + s1;
+    return rol64(s0 - s1, 2) - s1;
 }
