@@ -1,5 +1,6 @@
 /logs*/
 /args
 /args.*
+!/args.py
 /pass
 /pass.*

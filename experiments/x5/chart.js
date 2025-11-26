@@ -234,6 +234,18 @@ function main() {
     const args = process.argv.slice(2);
     const noColor = args.includes('--no-color');
     const useColor = !noColor && process.stdout.isTTY;
+    // New options:
+    //   -n N   Limit output to top N files (sorted like scan.js)
+    //   -l     Show legend (suppressed by default)
+    const nIdx = args.indexOf('-n');
+    let limit = Infinity;
+    if (nIdx >= 0 && nIdx + 1 < args.length) {
+        const nVal = parseInt(args[nIdx + 1], 10);
+        if (Number.isFinite(nVal) && nVal > 0) {
+            limit = nVal;
+        }
+    }
+    const showLegend = args.includes('-l');
 
     if (!fs.existsSync(logDir)) {
         console.error('No logs directory:', logDir);
@@ -242,16 +254,14 @@ function main() {
 
     const parsed = [];
     let maxBytes = 0;
-    
-    // Get list of existing log files
+
+    // Gather log files (lexicographic order retained).
     const existingFiles = fs.readdirSync(logDir)
         .filter(file => file.endsWith('.log'))
-        .map(file => parseInt(file.replace('.log', '')))
-        .filter(num => !isNaN(num))
-        .sort((a, b) => a - b);
-    
-    for (const i of existingFiles) {
-        const r = parseLog(path.join(logDir, i + '.log'));
+        .sort();
+
+    for (const fname of existingFiles) {
+        const r = parseLog(path.join(logDir, fname));
         parsed.push(r);
         if (r.finalBytes != null && !isNaN(r.finalBytes) && r.finalBytes > maxBytes) {
             maxBytes = r.finalBytes;
@@ -263,27 +273,83 @@ function main() {
         process.exit(1);
     }
 
+    // Build enriched entries for sorting (scan.js logic):
+    const entries = parsed.map(r => {
+        let lastOk = null;
+        for (let i = r.blocks.length - 1; i >= 0; i--) {
+            if (/ok/i.test(r.blocks[i].status)) {
+                lastOk = r.blocks[i].bytes;
+                break;
+            }
+        }
+        const finalBlock = r.blocks.length ? r.blocks[r.blocks.length - 1] : null;
+        const finalP = finalBlock && Number.isFinite(finalBlock.p) ? finalBlock.p : -Infinity;
+        const finalSev = finalBlock ? severityOf(finalBlock.status) : Number.MAX_SAFE_INTEGER;
+        return {
+            ...r,
+            lastOk,
+            finalBlock,
+            finalP,
+            finalSev
+        };
+    });
+
+    // Sort: descending lastOk, then descending final p-value, then ascending severity.
+    entries.sort((a, b) => {
+        const ax = a.lastOk != null ? a.lastOk : -Infinity;
+        const bx = b.lastOk != null ? b.lastOk : -Infinity;
+        if (bx !== ax) return bx - ax;
+
+        if (b.finalP !== a.finalP) return b.finalP - a.finalP;
+
+        return a.finalSev - b.finalSev;
+    });
+
+    const displayEntries = limit === Infinity ? entries : entries.slice(0, limit);
+
     console.log('HWD Log Severity Byte Chart (per-cell MAX severity, max final bytes=' + maxBytes.toExponential(3) + ')');
     console.log('');
-    console.log('File     Bar');
-    console.log('-------- ' + '-'.repeat(BAR_LEN));
-    for (const r of parsed) {
+    const labelWidth = displayEntries.length
+        ? Math.min(Math.max(...displayEntries.map(r => r.file.length), 4), 24)
+        : 8;
+    console.log('File'.padEnd(labelWidth) + ' ' + 'Bar');
+    console.log('-'.repeat(labelWidth) + ' ' + '-'.repeat(BAR_LEN));
+    for (const r of displayEntries) {
         const bar = buildBar(maxBytes, r.finalBytes, r.blocks, useColor);
-        const fileLabel = r.file.padEnd(8);
+        const fileLabel = r.file.length > labelWidth
+            ? r.file.slice(0, labelWidth - 1) + '…'
+            : r.file.padEnd(labelWidth);
         console.log(fileLabel + ' ' + bar);
     }
-    console.log('');
-    console.log('Legend (severity 0..4):');
-    function leg(idx, label) {
-        const glyph = severityChars[idx];
-        const coloredGlyph = useColor ? (colorCodes[idx] + glyph + ANSI_RESET) : glyph;
-        console.log(`  ${idx}: ${coloredGlyph} = ${label}`);
+
+    // Optional legend
+    if (showLegend) {
+        console.log('');
+        console.log('Legend (severity 0..4):');
+        function leg(idx, label) {
+            const glyph = severityChars[idx];
+            const coloredGlyph = useColor ? (colorCodes[idx] + glyph + ANSI_RESET) : glyph;
+            console.log(`  ${idx}: ${coloredGlyph} = ${label}`);
+        }
+        leg(0,'ok');
+        leg(1,'unusual');
+        leg(2,'very unusual');
+        leg(3,'Worrying and very unusual');
+        leg(4,'EXTREMELY Worrying and very unusual');
     }
-    leg(0,'ok');
-    leg(1,'unusual');
-    leg(2,'very unusual');
-    leg(3,'Worrying and very unusual');
-    leg(4,'EXTREMELY Worrying and very unusual');
+
+    // Summary line (always shown).
+    const totalFiles = parsed.length;
+    const failCount = parsed.reduce((acc, r) => {
+        if (r.blocks.length) {
+            const last = r.blocks[r.blocks.length - 1];
+            if (severityOf(last.status) === 4) acc++;
+        }
+        return acc;
+    }, 0);
+    const failPct = totalFiles ? (failCount / totalFiles * 100).toFixed(2) : '0.00';
+    console.log('');
+    console.log(`Summary: completed ${failCount}/${totalFiles}; (${failPct}%) failed -- ${totalFiles - failCount} OK`);
 }
 
 if (require.main === module) {
